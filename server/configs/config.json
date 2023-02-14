@@ -1,0 +1,10 @@
+{
+  "http": {
+    "host": "127.0.0.1",
+    "port": "8080"
+  },
+  "storage": {
+    "type": "in-memory",
+    "dsn": "postgres://postgres:postgres@localhost:54321/backups?sslmode=disable"
+  }
+}

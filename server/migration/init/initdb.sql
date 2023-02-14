@@ -1,0 +1,2 @@
+CREATE DATABASE backups;
+GRANT ALL PRIVILEGES ON DATABASE backups to postgres;  
