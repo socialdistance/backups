@@ -24,7 +24,7 @@ type App struct {
 
 type Storage interface {
 	CreateEvent(e storage.Event) error
-	DeleteEvent(id uuid.UUID)
+	DeleteEvent(id uuid.UUID) error
 	Find(id uuid.UUID) (*storage.Event, error)
 	FindAllEvents() ([]storage.Event, error)
 }
