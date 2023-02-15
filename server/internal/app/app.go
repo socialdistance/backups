@@ -1,8 +1,11 @@
 package app
 
 import (
-	"go.uber.org/zap"
 	"net/http"
+	"server/internal/storage"
+
+	"github.com/gofrs/uuid"
+	"go.uber.org/zap"
 )
 
 type Logger interface {
@@ -19,7 +22,11 @@ type App struct {
 	storage Storage
 }
 
-type Storage interface { // TODO
+type Storage interface {
+	CreateEvent(e storage.Event) error
+	DeleteEvent(id uuid.UUID)
+	Find(id uuid.UUID) (*storage.Event, error)
+	FindAllEvents() ([]storage.Event, error)
 }
 
 func NewApp(logger Logger, storage Storage) *App {
@@ -28,5 +35,3 @@ func NewApp(logger Logger, storage Storage) *App {
 		storage: storage,
 	}
 }
-
-// TODO
