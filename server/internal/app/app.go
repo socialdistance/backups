@@ -1,7 +1,6 @@
 package app
 
 import (
-	"net/http"
 	"server/internal/storage"
 
 	"github.com/gofrs/uuid"
@@ -13,8 +12,8 @@ type Logger interface {
 	Info(message string, fields ...zap.Field)
 	Error(message string, fields ...zap.Field)
 	Fatal(message string, fields ...zap.Field)
-	LogHTTP(r *http.Request, code, length int)
 	Sync() error
+	With(fields ...zap.Field) *zap.Logger
 }
 
 type App struct {

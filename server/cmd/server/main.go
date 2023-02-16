@@ -45,7 +45,7 @@ func main() {
 	app := internalapp.NewApp(logg, store)
 
 	httpHandler := internalhttp.NewRouter(*app, logg)
-	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, app, httpHandler)
+	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, app, httpHandler, logg)
 
 	go func() {
 		server.BuildRouters()

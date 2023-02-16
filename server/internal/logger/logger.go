@@ -1,10 +1,9 @@
 package logger
 
 import (
-	"go.uber.org/zap"
 	"log"
-	"net/http"
-	"time"
+
+	"go.uber.org/zap"
 )
 
 type Logger struct {
@@ -27,15 +26,8 @@ func (l *Logger) Fatal(message string, fields ...zap.Field) {
 	l.zap.Fatal(message, fields...)
 }
 
-func (l *Logger) LogHTTP(r *http.Request, code, length int) {
-	l.zap.Info("HTTP logger:", zap.Strings(
-		"HTTP", []string{r.RemoteAddr,
-			time.Now().Format("01/Jan/2003:10:10:10 MST"),
-			r.RequestURI,
-			r.Proto,
-			r.UserAgent()}),
-		zap.Int("code", code),
-		zap.Int("length", length))
+func (l *Logger) With(fields ...zap.Field) *zap.Logger {
+	return l.zap.With(fields...)
 }
 
 func (l *Logger) Sync() error {

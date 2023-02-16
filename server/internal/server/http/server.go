@@ -3,11 +3,13 @@ package http
 import (
 	"context"
 	"fmt"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"net/http"
 	"server/internal/app"
 	"time"
+
+	internallogger "server/internal/logger"
+
+	"github.com/labstack/echo/v4"
 )
 
 type Server struct {
@@ -16,13 +18,15 @@ type Server struct {
 	e      *echo.Echo
 	app    *app.App
 	router *Router
+	logg   *internallogger.Logger
 }
 
-func NewServer(host, port string, app *app.App, router *Router) *Server {
+func NewServer(host, port string, app *app.App, router *Router, logg *internallogger.Logger) *Server {
 	e := echo.New()
 	e.HideBanner = true
 
-	e.Use(middleware.CORS())
+	// e.Use(middleware.CORS())
+	e.Use(ZapLogger(logg))
 
 	//e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 	//	AllowOrigins: []string{"http://localhost:3000"},
@@ -41,18 +45,10 @@ func NewServer(host, port string, app *app.App, router *Router) *Server {
 	}
 }
 
-// BuildRouters TODO: serve static files
 func (f *Server) BuildRouters() {
-	//f.e.Static("/", "tmp")
-	//fs := http.FileServer(http.Dir("/home/user/work/class_attachments/server/tmp"))
-	//f.e.GET("/uploads/*", echo.WrapHandler(http.StripPrefix("/uploads/", fs)))
-	//
-	//fsAPI := f.e.Group("/api")
-	//
-	//fsAPI.POST("/upload", f.router.Upload)
-	//fsAPI.DELETE("/delete", f.router.Delete)
-	//fsAPI.GET("/data", f.router.ListData) // get data from table attachments
-	//fsAPI.POST("/name", f.router.GetUser) // get user from table info
+
+	api := f.e.Group("/api")
+	api.GET("/command", f.router.CommandHandler)
 }
 
 func (f *Server) Start() error {
