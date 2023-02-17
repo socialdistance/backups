@@ -18,15 +18,15 @@ type Server struct {
 	e      *echo.Echo
 	app    *app.App
 	router *Router
-	logg   *internallogger.Logger
+	logg   internallogger.Logger
 }
 
-func NewServer(host, port string, app *app.App, router *Router, logg *internallogger.Logger) *Server {
+func NewServer(host, port string, app *app.App, router *Router, logg internallogger.Logger) *Server {
 	e := echo.New()
 	e.HideBanner = true
 
 	// e.Use(middleware.CORS())
-	e.Use(ZapLogger(logg))
+	e.Use(MiddlwareLogger(logg))
 
 	//e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 	//	AllowOrigins: []string{"http://localhost:3000"},

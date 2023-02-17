@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 )
 
 var (
@@ -18,15 +18,12 @@ type Event struct {
 	Hostname    string
 	Command     string
 	Description string
-	Timestamp   time.Time
 	Worker_UUID uuid.UUID
+	Timestamp   time.Time
 }
 
-func NewEvent(hostname, command, description string, timestamp time.Time, worker_UUID uuid.UUID) (*Event, error) {
-	id, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
+func NewEvent(hostname, command, description string, timestamp time.Time, worker_UUID uuid.UUID) *Event {
+	id := uuid.New()
 
 	return &Event{
 		ID:          id,
@@ -35,5 +32,5 @@ func NewEvent(hostname, command, description string, timestamp time.Time, worker
 		Description: description,
 		Timestamp:   timestamp,
 		Worker_UUID: worker_UUID,
-	}, nil
+	}
 }

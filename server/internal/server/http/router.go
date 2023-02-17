@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"net/http"
 	internalapp "server/internal/app"
 
@@ -20,5 +21,17 @@ func NewRouter(app internalapp.App, logger internalapp.Logger) *Router {
 }
 
 func (r *Router) CommandHandler(c echo.Context) error {
-	return c.JSON(http.StatusOK, "Hello world")
+	var task TaskDTO
+
+	dto, err := task.GetModelTask()
+	if err != nil {
+		r.logger.Error(err.Error())
+	}
+
+	response, err := json.Marshal(dto)
+	if err != nil {
+		r.logger.Error(err.Error())
+	}
+
+	return c.JSON(http.StatusOK, response)
 }

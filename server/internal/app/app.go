@@ -1,9 +1,9 @@
 package app
 
 import (
-	"server/internal/storage"
+	internalstorage "server/internal/storage"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -12,8 +12,8 @@ type Logger interface {
 	Info(message string, fields ...zap.Field)
 	Error(message string, fields ...zap.Field)
 	Fatal(message string, fields ...zap.Field)
-	Sync() error
 	With(fields ...zap.Field) *zap.Logger
+	Sync() error
 }
 
 type App struct {
@@ -22,10 +22,10 @@ type App struct {
 }
 
 type Storage interface {
-	CreateEvent(e storage.Event) error
+	CreateEvent(e internalstorage.Event) error
 	DeleteEvent(id uuid.UUID) error
-	Find(id uuid.UUID) (*storage.Event, error)
-	FindAllEvents() ([]storage.Event, error)
+	Find(id uuid.UUID) (*internalstorage.Event, error)
+	FindAllEvents() ([]internalstorage.Event, error)
 }
 
 func NewApp(logger Logger, storage Storage) *App {

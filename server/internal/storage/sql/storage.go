@@ -4,7 +4,7 @@ import (
 	"context"
 	"server/internal/storage"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	pgx4 "github.com/jackc/pgx/v4"
 )
 

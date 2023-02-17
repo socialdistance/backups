@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,11 +13,7 @@ func TestStorage(t *testing.T) {
 	storage := NewMemory()
 
 	t.Run("storage test", func(t *testing.T) {
-		worker_UUID, err := uuid.NewV4()
-		if err != nil {
-			t.FailNow()
-			return
-		}
+		worker_UUID := uuid.New()
 
 		timestamp, err := time.Parse("2006-01-02 15:04:05", "2022-03-14 12:00:00")
 		if err != nil {
@@ -25,7 +21,7 @@ func TestStorage(t *testing.T) {
 			return
 		}
 
-		event, _ := internalmemory.NewEvent(
+		event := internalmemory.NewEvent(
 			"hostname_test", "command_test", "description_test", timestamp, worker_UUID)
 
 		err = storage.CreateEvent(*event)

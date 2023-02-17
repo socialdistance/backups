@@ -4,7 +4,7 @@ import (
 	"server/internal/storage"
 	"sync"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 )
 
 type Storage struct {

@@ -40,12 +40,11 @@ func main() {
 	}
 
 	store := internalstore.CreateStorage(ctx, *config)
-	logg.Info("[+] Successfully connect to database")
 
 	app := internalapp.NewApp(logg, store)
 
 	httpHandler := internalhttp.NewRouter(*app, logg)
-	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, app, httpHandler, logg)
+	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, app, httpHandler, *logg)
 
 	go func() {
 		server.BuildRouters()
