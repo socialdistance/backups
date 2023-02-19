@@ -1,10 +1,10 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
 	internalapp "server/internal/app"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -21,17 +21,22 @@ func NewRouter(app internalapp.App, logger internalapp.Logger) *Router {
 }
 
 func (r *Router) CommandHandler(c echo.Context) error {
-	var task TaskDTO
+	task := new(WorkerTaskDTO)
 
-	dto, err := task.GetModelTask()
-	if err != nil {
-		r.logger.Error(err.Error())
+	if err := c.Bind(task); err != nil {
+		return c.JSON(http.StatusBadRequest, "Error")
 	}
 
-	response, err := json.Marshal(dto)
+	taskIdStr, err := uuid.Parse(task.ID)
 	if err != nil {
-		r.logger.Error(err.Error())
+		return c.JSON(http.StatusBadRequest, "Can't parse uuid")
 	}
 
-	return c.JSON(http.StatusOK, response)
+	taskResponse, err := r.app.CommandHandlerApp(c.Request().Context(), taskIdStr)
+	if err != nil {
+		// TODO:
+		return c.JSON(http.StatusBadRequest, "something wrong")
+	}
+
+	return c.JSON(http.StatusOK, taskResponse)
 }

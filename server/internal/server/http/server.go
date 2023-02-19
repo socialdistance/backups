@@ -18,7 +18,7 @@ type Server struct {
 	e      *echo.Echo
 	app    *app.App
 	router *Router
-	logg   internallogger.Logger
+	// logg   internallogger.Logger
 }
 
 func NewServer(host, port string, app *app.App, router *Router, logg internallogger.Logger) *Server {

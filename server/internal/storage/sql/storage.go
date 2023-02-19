@@ -36,8 +36,8 @@ func (s *Storage) Close(ctx context.Context) error {
 	return s.conn.Close(ctx)
 }
 
-func (s *Storage) CreateEvent(e storage.Event) error {
-	return nil
+func (s *Storage) CreateEvent(e storage.Event) (*storage.Event, error) {
+	return nil, nil
 }
 
 func (s *Storage) DeleteEvent(id uuid.UUID) error {
