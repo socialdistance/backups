@@ -4,8 +4,10 @@ import (
 	"context"
 	"log"
 	"testing"
+	"time"
 
 	internallogger "server/internal/logger"
+	internalcache "server/internal/storage/cache"
 	internalstorage "server/internal/storage/memory"
 
 	"github.com/google/uuid"
@@ -24,7 +26,9 @@ func TestApp(t *testing.T) {
 
 	ctx := context.Background()
 
-	testApp := NewApp(logg, memmoryStorage)
+	cache := internalcache.NewCache(5*time.Minute, 10*time.Minute)
+
+	testApp := NewApp(logg, memmoryStorage, cache)
 
 	t.Run("CommandHandlerApp test", func(t *testing.T) {
 		task, err := testApp.CommandHandlerApp(ctx, worker_uuid)
