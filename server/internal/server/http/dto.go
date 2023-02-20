@@ -32,7 +32,7 @@ func (t *TaskDTO) GetModelTask() (*internalstorage.Task, error) {
 
 	id, err := uuid.Parse(t.ID)
 	if err != nil {
-		return nil, fmt.Errorf("ID exprected to be uuid, got: %s, %w", t.ID, err)
+		return nil, fmt.Errorf("ID expected to be uuid, got: %s, %w", t.ID, err)
 	}
 
 	worker_uuid, err := uuid.Parse(t.Worker_UUID)
