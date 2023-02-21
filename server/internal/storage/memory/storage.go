@@ -22,11 +22,11 @@ func (s *Storage) CreateEvent(e storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, ok := s.events[e.ID]; ok {
+	if _, ok := s.events[e.Worker_UUID]; ok {
 		return storage.ErrEventExist
 	}
 
-	s.events[e.ID] = e
+	s.events[e.Worker_UUID] = e
 
 	return nil
 }
@@ -44,11 +44,11 @@ func (s *Storage) DeleteEvent(id uuid.UUID) error {
 	return nil
 }
 
-func (s *Storage) Find(id uuid.UUID) (*storage.Event, error) {
+func (s *Storage) Find(worker_UUID uuid.UUID) (*storage.Event, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if event, ok := s.events[id]; ok {
+	if event, ok := s.events[worker_UUID]; ok {
 		return &event, nil
 	}
 

@@ -4,7 +4,7 @@
     "port": "8080"
   },
   "storage": {
-    "type": "in-memory",
+    "type": "sql",
     "dsn": "postgres://postgres:postgres@localhost:54321/backups?sslmode=disable"
   },
   "cache": {

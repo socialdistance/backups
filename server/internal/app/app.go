@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	internalstorage "server/internal/storage"
 	"time"
 
@@ -34,7 +33,7 @@ type Cache interface {
 type Storage interface {
 	CreateEvent(e internalstorage.Event) error
 	DeleteEvent(id uuid.UUID) error
-	Find(id uuid.UUID) (*internalstorage.Event, error)
+	Find(worker_UUID uuid.UUID) (*internalstorage.Event, error)
 	FindAllEvents() ([]internalstorage.Event, error)
 }
 
@@ -54,9 +53,7 @@ func (a *App) CommandHandlerApp(ctx context.Context, worker_uuid uuid.UUID) (*in
 	var event *internalstorage.Event
 
 	workerEvent, found := a.cache.Get(worker_uuid)
-	fmt.Println("found", found)
 	if !found {
-		fmt.Println("test")
 		timestamp, err := time.Parse("2006-01-02 15:04:05", "2022-03-14 12:00:00")
 		if err != nil {
 			return nil, err
@@ -69,6 +66,7 @@ func (a *App) CommandHandlerApp(ctx context.Context, worker_uuid uuid.UUID) (*in
 		a.cache.Set(event.Worker_UUID, *event, 5*time.Minute)
 		err = a.storage.CreateEvent(*event)
 		if err != nil {
+			a.logger.Error("Failed create event", zap.Error(err))
 			return nil, err
 		}
 

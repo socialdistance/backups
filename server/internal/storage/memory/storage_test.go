@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	internalmemory "server/internal/storage"
 	"testing"
 	"time"
@@ -30,7 +31,7 @@ func TestStorage(t *testing.T) {
 			return
 		}
 
-		findEvent, err := storage.Find(event.ID)
+		findEvent, err := storage.Find(event.Worker_UUID)
 		if err != nil {
 			t.FailNow()
 			return
@@ -45,7 +46,8 @@ func TestStorage(t *testing.T) {
 		require.Len(t, events, 1)
 		require.Equal(t, *event, events[0])
 
-		err = storage.DeleteEvent(event.ID)
+		err = storage.DeleteEvent(event.Worker_UUID)
+		fmt.Println("DELETE", err)
 		if err != nil {
 			t.FailNow()
 			return
