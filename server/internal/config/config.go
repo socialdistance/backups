@@ -8,14 +8,10 @@ import (
 
 type Storage string
 
-// const (
-// 	SQL      Storage = "sql"
-// 	InMemory Storage = "in-memory"
-// )
-
 type Config struct {
 	Storage StorageConf
 	HTTP    HttpConf
+	Cache   CacheConf
 }
 
 type StorageConf struct {
@@ -26,6 +22,11 @@ type StorageConf struct {
 type HttpConf struct {
 	Host string `json:"host"`
 	Port string `json:"port"`
+}
+
+type CacheConf struct {
+	DefaultExpiration int `json:"defaultExpiration"`
+	CleanupInterval   int `json:"cleanupInterval"`
 }
 
 func NewConfig() Config {

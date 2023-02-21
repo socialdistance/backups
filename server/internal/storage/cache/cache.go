@@ -24,7 +24,7 @@ type Item struct {
 }
 
 func NewCache(defaultExpiration, cleanupInterval time.Duration) *Cache {
-	items := make(map[uuid.UUID]Item)
+	items := make(map[uuid.UUID]Item, 10)
 
 	cache := Cache{
 		items:             items,

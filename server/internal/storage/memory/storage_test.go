@@ -24,7 +24,7 @@ func TestStorage(t *testing.T) {
 		event := internalmemory.NewEvent(
 			"hostname_test", "command_test", "description_test", timestamp, worker_UUID)
 
-		_, err = storage.CreateEvent(*event)
+		err = storage.CreateEvent(*event)
 		if err != nil {
 			t.FailNow()
 			return

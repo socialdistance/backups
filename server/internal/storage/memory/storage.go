@@ -18,17 +18,17 @@ func NewMemory() *Storage {
 	}
 }
 
-func (s *Storage) CreateEvent(e storage.Event) (*storage.Event, error) {
+func (s *Storage) CreateEvent(e storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if _, ok := s.events[e.ID]; ok {
-		return nil, storage.ErrEventExist
+		return storage.ErrEventExist
 	}
 
 	s.events[e.ID] = e
 
-	return &e, nil
+	return nil
 }
 
 func (s *Storage) DeleteEvent(id uuid.UUID) error {

@@ -5,14 +5,15 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"syscall"
+	"time"
+
 	internalapp "server/internal/app"
 	internalconfig "server/internal/config"
 	internallogger "server/internal/logger"
 	internalhttp "server/internal/server/http"
 	internalcache "server/internal/storage/cache"
 	internalstore "server/internal/storage/store"
-	"syscall"
-	"time"
 
 	"go.uber.org/zap"
 )
@@ -44,8 +45,7 @@ func main() {
 	store := internalstore.CreateStorage(ctx, *config)
 
 	// Создаем контейнер с временем жизни по-умолчанию равным 5 минут и удалением просроченного кеша каждые 10 минут
-	// TODO: add to config defaultExpiration and cleanupInterval
-	cache := internalcache.NewCache(5*time.Minute, 10*time.Minute)
+	cache := internalcache.NewCache(time.Duration(config.Cache.DefaultExpiration)*time.Minute, time.Duration(config.Cache.CleanupInterval)*time.Minute)
 
 	app := internalapp.NewApp(logg, store, cache)
 

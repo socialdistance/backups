@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	internalstorage "server/internal/storage"
 	"time"
 
@@ -31,7 +32,7 @@ type Cache interface {
 }
 
 type Storage interface {
-	CreateEvent(e internalstorage.Event) (*internalstorage.Event, error)
+	CreateEvent(e internalstorage.Event) error
 	DeleteEvent(id uuid.UUID) error
 	Find(id uuid.UUID) (*internalstorage.Event, error)
 	FindAllEvents() ([]internalstorage.Event, error)
@@ -50,57 +51,33 @@ func (a *App) CommandHandlerApp(ctx context.Context, worker_uuid uuid.UUID) (*in
 	// 1. check data in cache
 	// 2. check data in database/memorystorage?
 
+	var event *internalstorage.Event
+
 	workerEvent, found := a.cache.Get(worker_uuid)
+	fmt.Println("found", found)
 	if !found {
+		fmt.Println("test")
 		timestamp, err := time.Parse("2006-01-02 15:04:05", "2022-03-14 12:00:00")
 		if err != nil {
 			return nil, err
 		}
 
 		// TODO: there set data to cache and database
-		event := internalstorage.NewEvent(
+		event = internalstorage.NewEvent(
 			"hostname_test", "command_test", "description_test", timestamp, worker_uuid)
 
-		a.cache.Set(event.ID, *event, 5*time.Minute)
-		workerEvent, err = a.storage.CreateEvent(*event)
+		a.cache.Set(event.Worker_UUID, *event, 5*time.Minute)
+		err = a.storage.CreateEvent(*event)
 		if err != nil {
 			return nil, err
 		}
+
+		workerTask := internalstorage.NewTask(event.Command, event.Worker_UUID, timestamp)
+
+		return workerTask, nil
 	}
 
-	workerTask := internalstorage.Task{
-		ID:          workerEvent.ID,
-		Command:     workerEvent.Command,
-		Worker_UUID: workerEvent.Worker_UUID,
-		Timestamp:   workerEvent.Timestamp,
-	}
+	workerTask := internalstorage.NewTask(workerEvent.Command, workerEvent.Worker_UUID, workerEvent.Timestamp)
 
-	// workerEvent, err := a.storage.Find(worker_uuid)
-	// if err != nil {
-	// 	// TODO: time.Now()
-	// 	timestamp, err := time.Parse("2006-01-02 15:04:05", "2022-03-14 12:00:00")
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	// TODO: there set data to cache and database
-	// 	event := internalstorage.NewEvent(
-	// 		"hostname_test", "command_test", "description_test", timestamp, worker_uuid)
-
-	// 	a.cache.Set(event.ID, *event, 5*time.Minute)
-
-	// 	workerEvent, err = a.storage.CreateEvent(*event)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-
-	// workerTask := internalstorage.Task{
-	// 	ID:          workerEvent.ID,
-	// 	Command:     workerEvent.Command,
-	// 	Worker_UUID: workerEvent.Worker_UUID,
-	// 	Timestamp:   workerEvent.Timestamp,
-	// }
-
-	return &workerTask, nil
+	return workerTask, nil
 }
