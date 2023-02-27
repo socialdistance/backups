@@ -1,12 +1,14 @@
 package app
 
 import (
-	internalstorage "server/internal/storage"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
+
+	internalstorage "server/internal/storage"
 )
 
 type App struct {
@@ -46,10 +48,6 @@ func NewApp(logger Logger, storage Storage, cache Cache) *App {
 }
 
 func (a *App) CommandHandlerApp(ctx context.Context, worker_uuid uuid.UUID) (*internalstorage.Task, error) {
-	a.logger.Info("[+] Starting command handler app")
-	// 1. check data in cache
-	// 2. check data in database/memorystorage?
-
 	var event *internalstorage.Event
 
 	workerEvent, found := a.cache.Get(worker_uuid)
@@ -66,7 +64,7 @@ func (a *App) CommandHandlerApp(ctx context.Context, worker_uuid uuid.UUID) (*in
 		a.cache.Set(event.Worker_UUID, *event, 5*time.Minute)
 		err = a.storage.CreateEvent(*event)
 		if err != nil {
-			a.logger.Error("Failed create event", zap.Error(err))
+			a.logger.Error("[-] Failed create event", zap.Error(err))
 			return nil, err
 		}
 
@@ -75,7 +73,27 @@ func (a *App) CommandHandlerApp(ctx context.Context, worker_uuid uuid.UUID) (*in
 		return workerTask, nil
 	}
 
+	// Каждые 5 минут ходить в базу и обновлять данные в кеше асинхронно
+	// сделать воркер-пул, который будет запускаться, ходить в базу и записывать данные в кеш?
+	go a.cacheUpdate()
+
 	workerTask := internalstorage.NewTask(workerEvent.Command, workerEvent.Worker_UUID, workerEvent.Timestamp)
 
 	return workerTask, nil
+}
+
+func (a *App) cacheUpdate() {
+	fmt.Println("Start")
+	select {
+	case <-time.After(5 * time.Second):
+		fmt.Println("Start1")
+		events, err := a.storage.FindAllEvents()
+		if err != nil {
+			a.logger.Error("Cant get all events for update cache", zap.Error(err))
+		}
+
+		for _, event := range events {
+			a.cache.Set(event.Worker_UUID, event, 5*time.Minute)
+		}
+	}
 }
