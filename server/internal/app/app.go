@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -75,25 +74,24 @@ func (a *App) CommandHandlerApp(ctx context.Context, worker_uuid uuid.UUID) (*in
 
 	// Каждые 5 минут ходить в базу и обновлять данные в кеше асинхронно
 	// сделать воркер-пул, который будет запускаться, ходить в базу и записывать данные в кеш?
-	go a.cacheUpdate()
+	// go a.cacheUpdate()
 
 	workerTask := internalstorage.NewTask(workerEvent.Command, workerEvent.Worker_UUID, workerEvent.Timestamp)
 
 	return workerTask, nil
 }
 
-func (a *App) cacheUpdate() {
-	fmt.Println("Start")
-	select {
-	case <-time.After(5 * time.Second):
-		fmt.Println("Start1")
-		events, err := a.storage.FindAllEvents()
-		if err != nil {
-			a.logger.Error("Cant get all events for update cache", zap.Error(err))
-		}
+// func (a *App) cacheUpdate() {
+// 	select {
+// 	case <-time.After(5 * time.Second):
+// 		fmt.Println("Start1")
+// 		events, err := a.storage.FindAllEvents()
+// 		if err != nil {
+// 			a.logger.Error("Cant get all events for update cache", zap.Error(err))
+// 		}
 
-		for _, event := range events {
-			a.cache.Set(event.Worker_UUID, event, 5*time.Minute)
-		}
-	}
-}
+// 		for _, event := range events {
+// 			a.cache.Set(event.Worker_UUID, event, 5*time.Minute)
+// 		}
+// 	}
+// }
