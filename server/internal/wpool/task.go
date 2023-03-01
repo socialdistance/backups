@@ -1,17 +1,12 @@
 package wpool
 
-import "context"
-
 type Task struct {
 	Error    error
-	TaskFunc func(ctx context.Context) error
+	TaskFunc func() error
 }
 
-func (t Task) execute(ctx context.Context) error {
-	err := t.TaskFunc(ctx)
-	if err != nil {
-		return err
-	}
+func execute(t *Task) error {
+	t.Error = t.TaskFunc()
 
-	return nil
+	return t.Error
 }

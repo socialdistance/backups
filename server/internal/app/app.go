@@ -8,12 +8,14 @@ import (
 	"golang.org/x/net/context"
 
 	internalstorage "server/internal/storage"
+	workerpool "server/internal/wpool"
 )
 
 type App struct {
 	logger  Logger
 	storage Storage
 	cache   Cache
+	wpool   WorkerPool
 }
 
 type Logger interface {
@@ -38,11 +40,18 @@ type Storage interface {
 	FindAllEvents() ([]internalstorage.Event, error)
 }
 
-func NewApp(logger Logger, storage Storage, cache Cache) *App {
+type WorkerPool interface {
+	AddTask(task *workerpool.Task)
+	RunBackground()
+	StopBackground()
+}
+
+func NewApp(logger Logger, storage Storage, cache Cache, pool WorkerPool) *App {
 	return &App{
 		logger:  logger,
 		storage: storage,
 		cache:   cache,
+		wpool:   pool,
 	}
 }
 

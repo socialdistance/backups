@@ -1,41 +1,46 @@
 package wpool
 
 import (
-	"context"
 	"fmt"
-	"sync"
 	"time"
 )
 
-// TODO: fix args in this func
-func worker(ctx context.Context, wg *sync.WaitGroup, tasks <-chan Task, result chan<- interface{}) {
-	defer wg.Done()
+type WorkerPool struct {
+	tasks chan *Task
+	quit  chan struct{}
+}
+
+func NewWorkerPool(taskCh chan *Task) *WorkerPool {
+	return &WorkerPool{
+		tasks: taskCh,
+		quit:  make(chan struct{}),
+	}
+}
+
+func (wp *WorkerPool) StartWorkerBackground() {
+	fmt.Println("[+] Start worker")
+	ticker := time.NewTicker(5 * time.Second)
 
 	for {
 		select {
-		case <-time.After(time.Second * 5):
-			task, ok := <-tasks
-			if !ok {
+		case task := <-wp.tasks:
+			err := execute(task)
+			if err != nil {
 				return
 			}
-			result <- task.execute(ctx)
-		case <-ctx.Done():
-			fmt.Printf("Context cancelled %v", ctx.Err())
+		case <-wp.quit:
+			fmt.Println("Test stop")
+			ticker.Stop()
 			return
 		}
 	}
 }
 
-type WorkerPool struct {
-	wCount int
-	tasks  chan Task
-	result chan interface{}
-}
+func (wp *WorkerPool) StopWorkerBackGround() {
+	fmt.Println("[+] Stopping workers in background...")
 
-func NewWorkerPool(wCount int) *WorkerPool {
-	return &WorkerPool{
-		wCount: wCount,
-		tasks:  make(chan Task, wCount),
-		result: make(chan interface{}, wCount),
-	}
+	go func() {
+		
+		<-wp.quit
+	}()
 }

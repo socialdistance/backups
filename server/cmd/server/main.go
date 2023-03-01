@@ -14,6 +14,7 @@ import (
 	internalhttp "server/internal/server/http"
 	internalcache "server/internal/storage/cache"
 	internalstore "server/internal/storage/store"
+	workerpool "server/internal/wpool"
 
 	"go.uber.org/zap"
 )
@@ -47,10 +48,14 @@ func main() {
 	// Создаем контейнер с временем жизни по-умолчанию равным 5 минут и удалением просроченного кеша каждые 10 минут
 	cache := internalcache.NewCache(time.Duration(config.Cache.DefaultExpiration)*time.Minute, time.Duration(config.Cache.CleanupInterval)*time.Minute)
 
-	app := internalapp.NewApp(logg, store, cache)
+	pool := workerpool.NewPool(1)
+
+	app := internalapp.NewApp(logg, store, cache, pool)
 
 	httpHandler := internalhttp.NewRouter(*app, logg)
 	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, app, httpHandler, *logg)
+
+	pool.RunBackground()
 
 	go func() {
 		server.BuildRouters()
@@ -67,6 +72,8 @@ func main() {
 	select {
 	case s := <-interrupt:
 		logg.Info("[+] app stop by signal:", zap.String("signal", s.String()))
+		logg.Info("[+] workers stop by signal:", zap.String("signal", s.String()))
+		pool.StopBackground()
 	}
 	if err = server.Stop(); err != nil {
 		logg.Error("[-] failed to stop http server: " + err.Error())
