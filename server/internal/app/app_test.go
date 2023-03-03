@@ -9,6 +9,7 @@ import (
 	internallogger "server/internal/logger"
 	internalcache "server/internal/storage/cache"
 	internalstorage "server/internal/storage/memory"
+	workerpool "server/internal/wpool"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -24,11 +25,13 @@ func TestApp(t *testing.T) {
 
 	memmoryStorage := internalstorage.NewMemory()
 
+	pool := workerpool.NewPool(1)
+
 	ctx := context.Background()
 
 	cache := internalcache.NewCache(5*time.Minute, 10*time.Minute)
 
-	testApp := NewApp(logg, memmoryStorage, cache)
+	testApp := NewApp(logg, memmoryStorage, cache, pool)
 
 	t.Run("CommandHandlerApp test", func(t *testing.T) {
 		task, err := testApp.CommandHandlerApp(ctx, worker_uuid)
