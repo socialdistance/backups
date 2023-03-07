@@ -48,14 +48,18 @@ func main() {
 	// Создаем контейнер с временем жизни по-умолчанию равным 5 минут и удалением просроченного кеша каждые 10 минут
 	cache := internalcache.NewCache(time.Duration(config.Cache.DefaultExpiration)*time.Minute, time.Duration(config.Cache.CleanupInterval)*time.Minute)
 
-	pool := workerpool.NewPool(1)
+	pool, err := workerpool.NewPool(1, 0)
+	if err != nil {
+		logg.Error("error making worker pool:", zap.Error(err))
+		return
+	}
 
 	app := internalapp.NewApp(logg, store, cache, pool)
 
+	pool.Start()
+
 	httpHandler := internalhttp.NewRouter(*app, logg)
 	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, app, httpHandler, *logg)
-
-	pool.RunBackground()
 
 	go func() {
 		server.BuildRouters()
@@ -73,7 +77,7 @@ func main() {
 	case s := <-interrupt:
 		logg.Info("[+] app stop by signal:", zap.String("signal", s.String()))
 		logg.Info("[+] workers stop by signal:", zap.String("signal", s.String()))
-		pool.StopBackground()
+		pool.Stop()
 	}
 	if err = server.Stop(); err != nil {
 		logg.Error("[-] failed to stop http server: " + err.Error())

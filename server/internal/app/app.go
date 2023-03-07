@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/context"
 
 	internalstorage "server/internal/storage"
-	workerpool "server/internal/wpool"
+	wpool "server/internal/wpool"
 )
 
 type App struct {
@@ -41,9 +41,9 @@ type Storage interface {
 }
 
 type WorkerPool interface {
-	AddTask(task *workerpool.Task)
-	RunBackground()
-	StopBackground()
+	Start()
+	Stop()
+	AddTask(cacheTask wpool.CacheTask)
 }
 
 func NewApp(logger Logger, storage Storage, cache Cache, pool WorkerPool) *App {
