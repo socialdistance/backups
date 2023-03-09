@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -61,6 +62,9 @@ func main() {
 	httpHandler := internalhttp.NewRouter(*app, logg)
 	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, app, httpHandler, *logg)
 
+	doneCh := make(chan struct{})
+	startCacheUpdate(store, logg, cache, *pool, doneCh)
+
 	go func() {
 		server.BuildRouters()
 
@@ -78,9 +82,45 @@ func main() {
 		logg.Info("[+] app stop by signal:", zap.String("signal", s.String()))
 		logg.Info("[+] workers stop by signal:", zap.String("signal", s.String()))
 		pool.Stop()
+		doneCh <- struct{}{}
 	}
 	if err = server.Stop(); err != nil {
 		logg.Error("[-] failed to stop http server: " + err.Error())
 	}
+}
 
+func startCacheUpdate(storage internalapp.Storage, logger internalapp.Logger, cache internalapp.Cache, pool workerpool.Pool, doneCh chan struct{}) {
+	ticker := time.NewTicker(3 * time.Second)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				fmt.Println("Test")
+				task := workerpool.NewTaskPool(func() error {
+					events, err := storage.FindAllEvents()
+					fmt.Println(events)
+					if err != nil {
+						logger.Error("Cant get all events for update cache", zap.Error(err))
+					}
+
+					for _, event := range events {
+						cache.Set(event.Worker_UUID, event, 5*time.Minute)
+					}
+
+					fmt.Println("task procceed")
+
+					for _, event := range events {
+						fmt.Println("TEST")
+						fmt.Println(cache.Get(event.Worker_UUID))
+					}
+					return nil
+				})
+
+				pool.AddTask(*task)
+			case <-doneCh:
+				logger.Info("[+] Ticker stopped")
+				ticker.Stop()
+			}
+		}
+	}()
 }

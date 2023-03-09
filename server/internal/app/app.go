@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -88,28 +87,4 @@ func (a *App) CommandHandlerApp(ctx context.Context, worker_uuid uuid.UUID) (*in
 	workerTask := internalstorage.NewTask(workerEvent.Command, workerEvent.Worker_UUID, workerEvent.Timestamp)
 
 	return workerTask, nil
-}
-
-func (a *App) cacheUpdate() {
-	ticker := time.NewTicker(5 * time.Second)
-	select {
-	case <-ticker.C:
-		task := wpool.NewTaskPool(func() error {
-			fmt.Println("Start1")
-			events, err := a.storage.FindAllEvents()
-			if err != nil {
-				a.logger.Error("Cant get all events for update cache", zap.Error(err))
-			}
-
-			for _, event := range events {
-				a.cache.Set(event.Worker_UUID, event, 5*time.Minute)
-			}
-
-			fmt.Println("task procceed")
-
-			return nil
-		})
-
-		a.wpool.AddTask(*task)
-	}
 }

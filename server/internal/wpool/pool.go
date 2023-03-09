@@ -5,13 +5,7 @@ package wpool
 import (
 	"fmt"
 	"sync"
-	"time"
 )
-
-// type Task interface {
-// 	Execute() error
-// 	OnFailure(error)
-// }
 
 type Pool struct {
 	numWorkers int
@@ -58,28 +52,25 @@ func (p *Pool) AddTask(task CacheTask) {
 }
 
 func (p *Pool) startWorkers() {
-	ticker := time.NewTicker(5 * time.Second)
-
 	for i := 0; i < p.numWorkers; i++ {
 		go func(workerNum int) {
 			fmt.Println("[+] Starting worker")
 
 			for {
 				select {
-				case <-ticker.C:
-
 				case task, ok := <-p.tasks:
+					fmt.Println("Get job:", task)
 					if !ok {
 						fmt.Println("fail")
 						return
 					}
 
+					fmt.Println("Starting doing job")
 					if err := task.Execute(); err != nil {
 						task.OnFailure(err)
 					}
 				case <-p.quit:
 					fmt.Println("[+] Stopping worker and quit channel")
-					ticker.Stop()
 					return
 				}
 			}
