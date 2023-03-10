@@ -59,20 +59,23 @@ func (a *App) CommandHandlerApp(ctx context.Context, worker_uuid uuid.UUID) (*in
 	var event *internalstorage.Event
 
 	workerEvent, found := a.cache.Get(worker_uuid)
+	// Кеш будет обновляться каждые ~ 5 минут, воркер будет ходить в базу раз в 5 минут
+	// и обновлять данные из кеша. Тем самым я гарантирую, что в кеше каждые 5 минут будут актуальные данные
+	// Даже если они устареют, через 5 минут они обновяться и воркеры будут получать обновленные данные каждые 5 минут
 	if !found {
 		timestamp, err := time.Parse("2006-01-02 15:04:05", "2022-03-14 12:00:00")
 		if err != nil {
 			return nil, err
 		}
 
-		// TODO: there set data to cache and database
+		// TODO: "hostname_test", "command_test", "description_test"
 		event = internalstorage.NewEvent(
 			"hostname_test", "command_test", "description_test", timestamp, worker_uuid)
 
 		a.cache.Set(event.Worker_UUID, *event, 5*time.Minute)
 		err = a.storage.CreateEvent(*event)
 		if err != nil {
-			a.logger.Error("[-] Failed create event", zap.Error(err))
+			a.logger.Error("[-] Failed create event: ", zap.Error(err))
 			return nil, err
 		}
 
@@ -80,9 +83,6 @@ func (a *App) CommandHandlerApp(ctx context.Context, worker_uuid uuid.UUID) (*in
 
 		return workerTask, nil
 	}
-
-	// Каждые 5 минут ходить в базу и обновлять данные в кеше асинхронно
-	// сделать воркер-пул, который будет запускаться, ходить в базу и записывать данные в кеш?
 
 	workerTask := internalstorage.NewTask(workerEvent.Command, workerEvent.Worker_UUID, workerEvent.Timestamp)
 

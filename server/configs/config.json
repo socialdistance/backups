@@ -10,5 +10,9 @@
   "cache": {
     "defaultExpiration": 5,
     "cleanupInterval": 10
+  },
+  "workerpool": {
+    "numWorkers": 1,
+    "channelSize": 0
   }
 }

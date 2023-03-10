@@ -15,14 +15,10 @@ func NewTaskPool(f func() error) *CacheTask {
 	}
 }
 
-func (c *CacheTask) Execute() error {
+func Execute(c CacheTask) error {
 	fmt.Printf("Worker processes task\n")
 
 	c.Error = c.f()
 
 	return c.Error
-}
-
-func (c *CacheTask) OnFailure(error) {
-	panic("implement me")
 }

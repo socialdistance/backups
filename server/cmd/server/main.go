@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -49,7 +48,7 @@ func main() {
 	// Создаем контейнер с временем жизни по-умолчанию равным 5 минут и удалением просроченного кеша каждые 10 минут
 	cache := internalcache.NewCache(time.Duration(config.Cache.DefaultExpiration)*time.Minute, time.Duration(config.Cache.CleanupInterval)*time.Minute)
 
-	pool, err := workerpool.NewPool(1, 0)
+	pool, err := workerpool.NewPool(config.WorkerPool.NumWorkers, config.WorkerPool.NumWorkers, logg)
 	if err != nil {
 		logg.Error("error making worker pool:", zap.Error(err))
 		return
@@ -90,29 +89,24 @@ func main() {
 }
 
 func startCacheUpdate(storage internalapp.Storage, logger internalapp.Logger, cache internalapp.Cache, pool workerpool.Pool, doneCh chan struct{}) {
-	ticker := time.NewTicker(3 * time.Second)
+	ticker := time.NewTicker(60 * time.Second)
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				fmt.Println("Test")
 				task := workerpool.NewTaskPool(func() error {
 					events, err := storage.FindAllEvents()
-					fmt.Println(events)
 					if err != nil {
 						logger.Error("Cant get all events for update cache", zap.Error(err))
+						return err
 					}
 
 					for _, event := range events {
 						cache.Set(event.Worker_UUID, event, 5*time.Minute)
 					}
 
-					fmt.Println("task procceed")
+					logger.Info("[+] Task procceed")
 
-					for _, event := range events {
-						fmt.Println("TEST")
-						fmt.Println(cache.Get(event.Worker_UUID))
-					}
 					return nil
 				})
 

@@ -3,9 +3,19 @@ package wpool
 // https://github.com/swayne275/go-work/blob/main/example/main.go
 
 import (
-	"fmt"
 	"sync"
+
+	"go.uber.org/zap"
 )
+
+type Logger interface {
+	Debug(message string, fields ...zap.Field)
+	Info(message string, fields ...zap.Field)
+	Error(message string, fields ...zap.Field)
+	Fatal(message string, fields ...zap.Field)
+	With(fields ...zap.Field) *zap.Logger
+	Sync() error
+}
 
 type Pool struct {
 	numWorkers int
@@ -15,9 +25,11 @@ type Pool struct {
 	stop  sync.Once
 
 	quit chan struct{}
+
+	logger Logger
 }
 
-func NewPool(numWorkers int, channelSize int) (*Pool, error) {
+func NewPool(numWorkers int, channelSize int, logger Logger) (*Pool, error) {
 	tasks := make(chan CacheTask, channelSize)
 	quit := make(chan struct{})
 
@@ -27,20 +39,21 @@ func NewPool(numWorkers int, channelSize int) (*Pool, error) {
 		start:      sync.Once{},
 		stop:       sync.Once{},
 		quit:       quit,
+		logger:     logger,
 	}, nil
 }
 
 func (p *Pool) Start() {
 	p.start.Do(func() {
-		fmt.Println("[+] Starting worker pool")
+		p.logger.Info("[+] Starting worker pool")
 		p.startWorkers()
 	})
 }
 
 func (p *Pool) Stop() {
 	p.stop.Do(func() {
-		fmt.Println("[+] Stopping worker pool")
-		close(p.quit)
+		p.logger.Info("[+] Stopping worker pool")
+		p.quit <- struct{}{}
 	})
 }
 
@@ -54,23 +67,21 @@ func (p *Pool) AddTask(task CacheTask) {
 func (p *Pool) startWorkers() {
 	for i := 0; i < p.numWorkers; i++ {
 		go func(workerNum int) {
-			fmt.Println("[+] Starting worker")
+			p.logger.Info("[+] Starting workers")
 
 			for {
 				select {
 				case task, ok := <-p.tasks:
-					fmt.Println("Get job:", task)
 					if !ok {
-						fmt.Println("fail")
 						return
 					}
 
-					fmt.Println("Starting doing job")
-					if err := task.Execute(); err != nil {
-						task.OnFailure(err)
+					err := Execute(task)
+					if err != nil {
+						return
 					}
 				case <-p.quit:
-					fmt.Println("[+] Stopping worker and quit channel")
+					p.logger.Info("[+] Stopping worker and quit channel")
 					return
 				}
 			}
