@@ -41,11 +41,11 @@ func (s *Storage) Close(ctx context.Context) error {
 
 func (s *Storage) CreateEvent(e storage.Event) error {
 	sql := `
-		INSERT INTO events (id, hostname, command, description, worker_uuid, timestamp) VALUES 
+		INSERT INTO events (id, address, command, hostname, worker_uuid, timestamp) VALUES 
 		($1, $2, $3, $4, $5, $6)
 	`
 
-	_, err := s.conn.Exec(s.ctx, sql, e.ID.String(), e.Hostname, e.Command, e.Description, e.Worker_UUID.String(), e.Timestamp.Format(time.RFC3339))
+	_, err := s.conn.Exec(s.ctx, sql, e.ID.String(), e.Address, e.Command, e.Hostname, e.Worker_UUID.String(), e.Timestamp.Format(time.RFC3339))
 
 	return err
 }
@@ -62,13 +62,13 @@ func (s *Storage) DeleteEvent(id uuid.UUID) error {
 
 func (s *Storage) Find(worker_UUID uuid.UUID) (*storage.Event, error) {
 	var event storage.Event
-	sql := `select id, hostname, command, description, worker_uuid, timestamp from events where worker_uuid = $1`
+	sql := `select id, address, command, hostname, worker_uuid, timestamp from events where worker_uuid = $1`
 
 	err := s.conn.QueryRow(s.ctx, sql, worker_UUID).Scan(
 		&event.ID,
-		&event.Hostname,
+		&event.Address,
 		&event.Command,
-		&event.Description,
+		&event.Hostname,
 		&event.Worker_UUID,
 		&event.Timestamp,
 	)
@@ -88,7 +88,7 @@ func (s *Storage) FindAllEvents() ([]storage.Event, error) {
 	var events []storage.Event
 
 	sql := `
-		SELECT id, hostname, command, description, worker_uuid, timestamp  FROM events
+		SELECT id, address, command, hostname, worker_uuid, timestamp  FROM events
 	`
 
 	rows, err := s.conn.Query(s.ctx, sql)
@@ -99,9 +99,9 @@ func (s *Storage) FindAllEvents() ([]storage.Event, error) {
 
 	for rows.Next() {
 		var evt storage.Event
-		if err := rows.Scan(&evt.ID, &evt.Hostname,
+		if err := rows.Scan(&evt.ID, &evt.Address,
 			&evt.Command,
-			&evt.Description,
+			&evt.Hostname,
 			&evt.Worker_UUID,
 			&evt.Timestamp); err != nil {
 			return nil, fmt.Errorf("cant convert result: %w", err)

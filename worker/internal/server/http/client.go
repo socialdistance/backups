@@ -4,22 +4,23 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 	internalapp "worker/internal/app"
 )
 
-type Router struct {
+type Client struct {
 	logger internalapp.Logger
 	app    internalapp.App
 }
 
-func NewRouter(app internalapp.App, logger internalapp.Logger) *Router {
-	return &Router{
+func NewClient(app internalapp.App, logger internalapp.Logger) *Client {
+	return &Client{
 		logger: logger,
 		app:    app,
 	}
 }
 
-func (r *Router) RequestToControlServer() error {
+func (c *Client) RequestToControlServer() error {
 	// TODO: add hostname, ip address
 	url := "http://localhost:8080/api/command?id=648f16fc-fdd5-4dab-84c6-e5f8852622e3"
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -40,6 +41,20 @@ func (r *Router) RequestToControlServer() error {
 		fmt.Printf("client: could not read response body: %s\n", err)
 	}
 	fmt.Printf("client: response body: %s\n", resBody)
+
+	return nil
+}
+
+func (c *Client) Run() error {
+	ticker := time.NewTicker(5 * time.Second)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				c.RequestToControlServer()
+			}
+		}
+	}()
 
 	return nil
 }

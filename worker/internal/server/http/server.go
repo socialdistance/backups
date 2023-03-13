@@ -18,7 +18,6 @@ type Server struct {
 	e      *echo.Echo
 	app    *app.App
 	router *Router
-	// logg   internallogger.Logger
 }
 
 func NewServer(host, port string, app *app.App, router *Router, logg internallogger.Logger) *Server {
@@ -46,9 +45,15 @@ func NewServer(host, port string, app *app.App, router *Router, logg internallog
 }
 
 func (f *Server) BuildRouters() {
-
-	api := f.e.Group("/api")
-	api.GET("/command", f.router.CommandHandler)
+	ticker := time.NewTicker(5 * time.Second)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				f.router.RequestToControlServer()
+			}
+		}
+	}()
 }
 
 func (f *Server) Start() error {

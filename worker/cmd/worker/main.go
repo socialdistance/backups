@@ -36,24 +36,27 @@ func main() {
 		syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	config, err := internalconfig.LoadConfig(configFile)
+	_, err = internalconfig.LoadConfig(configFile)
 	if err != nil {
 		logg.Error("Failed load config", zap.Error(err))
 	}
 
-	app := internalapp.NewApp()
+	app := internalapp.NewApp(logg)
 
-	httpHandler := internalhttp.NewRouter(*app, logg)
-	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, app, httpHandler, *logg)
+	client := internalhttp.NewClient(*app, logg)
+	client.Run()
 
-	go func() {
-		server.BuildRouters()
+	// httpHandler := internalhttp.NewRouter(*app, logg)
+	// server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, app, httpHandler, *logg)
 
-		if err = server.Start(); err != nil {
-			logg.Info("failed to start http server: " + err.Error())
-			cancel()
-		}
-	}()
+	// go func() {
+	// 	server.BuildRouters()
+
+	// 	if err = server.Start(); err != nil {
+	// 		logg.Info("failed to start http server: " + err.Error())
+	// 		cancel()
+	// 	}
+	// }()
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, syscall.SIGINT, syscall.SIGTERM)
@@ -62,7 +65,7 @@ func main() {
 	case s := <-interrupt:
 		logg.Info("[+] app stop by signal:", zap.String("signal", s.String()))
 	}
-	if err = server.Stop(); err != nil {
-		logg.Error("[-] failed to stop http server: " + err.Error())
-	}
+	// if err = server.Stop(); err != nil {
+	// 	logg.Error("[-] failed to stop http server: " + err.Error())
+	// }
 }

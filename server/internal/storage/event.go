@@ -15,21 +15,21 @@ var (
 // struct event from workers
 type Event struct {
 	ID          uuid.UUID
-	Hostname    string
+	Address     string
 	Command     string
-	Description string
+	Hostname    string
 	Worker_UUID uuid.UUID
 	Timestamp   time.Time
 }
 
-func NewEvent(hostname, command, description string, timestamp time.Time, worker_UUID uuid.UUID) *Event {
+func NewEvent(address, command, hostname string, timestamp time.Time, worker_UUID uuid.UUID) *Event {
 	id := uuid.New()
 
 	return &Event{
 		ID:          id,
-		Hostname:    hostname,
+		Address:     address,
 		Command:     command,
-		Description: description,
+		Hostname:    hostname,
 		Timestamp:   timestamp,
 		Worker_UUID: worker_UUID,
 	}
