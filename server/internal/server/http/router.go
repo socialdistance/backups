@@ -24,7 +24,7 @@ func (r *Router) CommandHandler(c echo.Context) error {
 	task := new(WorkerTaskDTO)
 
 	if err := c.Bind(task); err != nil {
-		return c.JSON(http.StatusBadRequest, "Error")
+		return c.JSON(http.StatusBadRequest, "Error bind")
 	}
 
 	taskIdStr, err := uuid.Parse(task.ID)
@@ -32,7 +32,7 @@ func (r *Router) CommandHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, "Can't parse uuid")
 	}
 
-	taskResponse, err := r.app.CommandHandlerApp(c.Request().Context(), taskIdStr)
+	taskResponse, err := r.app.CommandHandlerApp(c.Request().Context(), taskIdStr, task.Address, task.Command, task.Hostname)
 	if err != nil {
 		// TODO:
 		return c.JSON(http.StatusBadRequest, "something wrong")

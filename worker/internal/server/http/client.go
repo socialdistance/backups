@@ -2,27 +2,39 @@ package http
 
 import (
 	"fmt"
+	"github.com/google/uuid"
 	"io/ioutil"
 	"net/http"
 	"time"
 	internalapp "worker/internal/app"
+	internalstorage "worker/internal/storage"
 )
 
 type Client struct {
 	logger internalapp.Logger
 	app    internalapp.App
+
+	workerUuid uuid.UUID
 }
 
-func NewClient(app internalapp.App, logger internalapp.Logger) *Client {
+func NewClient(app internalapp.App, logger internalapp.Logger, workerUuid uuid.UUID) *Client {
 	return &Client{
-		logger: logger,
-		app:    app,
+		logger:     logger,
+		app:        app,
+		workerUuid: workerUuid,
 	}
 }
 
 func (c *Client) RequestToControlServer() error {
-	// TODO: add hostname, ip address
-	url := "http://localhost:8080/api/command?id=648f16fc-fdd5-4dab-84c6-e5f8852622e3"
+	// TODO: refactor
+	taskInfo, err := internalstorage.NewTask(c.workerUuid)
+	if err != nil {
+		// TODO: error handling
+		fmt.Println("Something wrong with taskInfo")
+	}
+
+	url := fmt.Sprintf("http://localhost:8080/api/command?id=%s&address=%s&command=%s&hostname=%s", taskInfo.WorkerUuid, taskInfo.Address, taskInfo.Command, taskInfo.Hostname)
+
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		fmt.Printf("client: could not create request: %s\n", err)
@@ -45,13 +57,40 @@ func (c *Client) RequestToControlServer() error {
 	return nil
 }
 
-func (c *Client) Run() error {
+func (c *Client) SendBackupToControlServer() error {
+	err := c.app.ExecuteBackupScript("backup.sh")
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	return nil
+}
+
+func (c *Client) Run(doneCh chan struct{}) error {
 	ticker := time.NewTicker(5 * time.Second)
 	go func() {
 		for {
 			select {
 			case <-ticker.C:
-				c.RequestToControlServer()
+				err := c.RequestToControlServer()
+				if err != nil {
+					return
+				}
+			case <-doneCh:
+				ticker.Stop()
+			}
+		}
+	}()
+
+	ticker2 := time.NewTicker(2 * time.Second)
+	go func() {
+		for {
+			select {
+			case <-ticker2.C:
+				err := c.SendBackupToControlServer()
+				if err != nil {
+					return
+				}
 			}
 		}
 	}()

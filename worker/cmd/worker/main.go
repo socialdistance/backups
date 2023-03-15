@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/google/uuid"
 	"os"
 	"os/signal"
 	"syscall"
@@ -43,20 +44,14 @@ func main() {
 
 	app := internalapp.NewApp(logg)
 
-	client := internalhttp.NewClient(*app, logg)
-	client.Run()
+	// TODO: i dont sure about this
+	workerUuid := uuid.New()
+	worker := internalhttp.NewClient(*app, logg, workerUuid)
 
-	// httpHandler := internalhttp.NewRouter(*app, logg)
-	// server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, app, httpHandler, *logg)
-
-	// go func() {
-	// 	server.BuildRouters()
-
-	// 	if err = server.Start(); err != nil {
-	// 		logg.Info("failed to start http server: " + err.Error())
-	// 		cancel()
-	// 	}
-	// }()
+	doneCh := make(chan struct{})
+	if err := worker.Run(doneCh); err != nil {
+		logg.Error("Failed start client", zap.Error(err))
+	}
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, syscall.SIGINT, syscall.SIGTERM)
@@ -64,8 +59,6 @@ func main() {
 	select {
 	case s := <-interrupt:
 		logg.Info("[+] app stop by signal:", zap.String("signal", s.String()))
+		<-doneCh
 	}
-	// if err = server.Stop(); err != nil {
-	// 	logg.Error("[-] failed to stop http server: " + err.Error())
-	// }
 }

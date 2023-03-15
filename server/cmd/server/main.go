@@ -89,7 +89,7 @@ func main() {
 }
 
 func startCacheUpdate(storage internalapp.Storage, logger internalapp.Logger, cache internalapp.Cache, pool workerpool.Pool, doneCh chan struct{}) {
-	ticker := time.NewTicker(60 * time.Second)
+	ticker := time.NewTicker(10 * time.Second)
 	go func() {
 		for {
 			select {

@@ -36,7 +36,7 @@ type Cache interface {
 type Storage interface {
 	CreateEvent(e internalstorage.Event) error
 	DeleteEvent(id uuid.UUID) error
-	Find(worker_UUID uuid.UUID) (*internalstorage.Event, error)
+	Find(workerUuid uuid.UUID) (*internalstorage.Event, error)
 	FindAllEvents() ([]internalstorage.Event, error)
 }
 
@@ -55,10 +55,10 @@ func NewApp(logger Logger, storage Storage, cache Cache, pool WorkerPool) *App {
 	}
 }
 
-func (a *App) CommandHandlerApp(ctx context.Context, worker_uuid uuid.UUID) (*internalstorage.Task, error) {
+func (a *App) CommandHandlerApp(ctx context.Context, workerUuid uuid.UUID, address, command, hostname string) (*internalstorage.Task, error) {
 	var event *internalstorage.Event
 
-	workerEvent, found := a.cache.Get(worker_uuid)
+	workerEvent, found := a.cache.Get(workerUuid)
 	// Кеш будет обновляться каждые ~ 5 минут, воркер будет ходить в базу раз в 5 минут
 	// и обновлять данные из кеша. Тем самым я гарантирую, что в кеше каждые 5 минут будут актуальные данные
 	// Даже если они устареют, через 5 минут они обновяться и воркеры будут получать обновленные данные каждые 5 минут
@@ -68,9 +68,8 @@ func (a *App) CommandHandlerApp(ctx context.Context, worker_uuid uuid.UUID) (*in
 			return nil, err
 		}
 
-		// TODO: "hostname_test", "command_test", "description_test"
 		event = internalstorage.NewEvent(
-			"hostname_test", "command_test", "description_test", timestamp, worker_uuid)
+			address, command, hostname, timestamp, workerUuid)
 
 		a.cache.Set(event.Worker_UUID, *event, 5*time.Minute)
 		err = a.storage.CreateEvent(*event)

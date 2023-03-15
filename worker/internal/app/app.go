@@ -1,6 +1,10 @@
 package app
 
-import "go.uber.org/zap"
+import (
+	"fmt"
+	"go.uber.org/zap"
+	"os/exec"
+)
 
 type App struct {
 	logger Logger
@@ -19,4 +23,18 @@ func NewApp(logg Logger) *App {
 	return &App{
 		logger: logg,
 	}
+}
+
+func (a *App) ExecuteBackupScript(path string) error {
+	a.logger.Info("[+] Executing backup script")
+
+	cmd, err := exec.Command("/bin/sh", path).Output()
+	if err != nil {
+		fmt.Printf("error %s", err)
+		return err
+	}
+	output := string(cmd)
+	fmt.Println("OUTPUT", output)
+
+	return nil
 }
