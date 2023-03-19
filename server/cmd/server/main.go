@@ -62,7 +62,7 @@ func main() {
 	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, app, httpHandler, *logg)
 
 	doneCh := make(chan struct{})
-	startCacheUpdate(store, logg, cache, *pool, doneCh)
+	startCacheUpdate(store, logg, cache, pool, doneCh)
 
 	go func() {
 		server.BuildRouters()
@@ -88,7 +88,7 @@ func main() {
 	}
 }
 
-func startCacheUpdate(storage internalapp.Storage, logger internalapp.Logger, cache internalapp.Cache, pool workerpool.Pool, doneCh chan struct{}) {
+func startCacheUpdate(storage internalapp.Storage, logger internalapp.Logger, cache internalapp.Cache, pool *workerpool.Pool, doneCh chan struct{}) {
 	ticker := time.NewTicker(10 * time.Second)
 	go func() {
 		for {

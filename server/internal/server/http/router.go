@@ -1,7 +1,10 @@
 package http
 
 import (
+	"fmt"
+	"io"
 	"net/http"
+	"os"
 	internalapp "server/internal/app"
 
 	"github.com/google/uuid"
@@ -39,4 +42,36 @@ func (r *Router) CommandHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, taskResponse)
+}
+
+func (r *Router) UploadFile(c echo.Context) error {
+	form, err := c.MultipartForm()
+	if err != nil {
+		return err
+	}
+	files := form.File["files"]
+
+	for _, file := range files {
+		// Source
+		src, err := file.Open()
+		if err != nil {
+			return err
+		}
+		defer src.Close()
+
+		// Destination
+		dst, err := os.Create(fmt.Sprintf("/Users/user/work/dev/backups/uploads/%s", file.Filename))
+		if err != nil {
+			return err
+		}
+		defer dst.Close()
+
+		// Copy
+		if _, err = io.Copy(dst, src); err != nil {
+			return err
+		}
+
+	}
+
+	return c.JSON(http.StatusOK, "test")
 }

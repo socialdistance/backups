@@ -1,10 +1,16 @@
 package http
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
+	"os"
 	"time"
 	internalapp "worker/internal/app"
 	internalstorage "worker/internal/storage"
@@ -29,44 +35,52 @@ func (c *Client) RequestToControlServer() error {
 	// TODO: refactor
 	taskInfo, err := internalstorage.NewTask(c.workerUuid)
 	if err != nil {
-		// TODO: error handling
-		fmt.Println("Something wrong with taskInfo")
+		c.logger.Error("TaskInfo can't create object with err:", zap.Error(err))
+		return err
 	}
 
 	url := fmt.Sprintf("http://localhost:8080/api/command?id=%s&address=%s&command=%s&hostname=%s", taskInfo.WorkerUuid, taskInfo.Address, taskInfo.Command, taskInfo.Hostname)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
-		fmt.Printf("client: could not create request: %s\n", err)
+		c.logger.Error("Client: could not create request:", zap.Error(err))
+		return err
 	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Printf("client: error making http request: %s\n", err)
+		c.logger.Error("Client: error making http request:", zap.Error(err))
+		return err
 	}
 
-	fmt.Printf("client: got response!\n")
-	fmt.Printf("client: status code: %d\n", res.StatusCode)
+	c.logger.Info("client: got response!")
+	c.logger.Info("client: status code", zap.Int("status code", res.StatusCode))
 
 	resBody, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Printf("client: could not read response body: %s\n", err)
+		c.logger.Error("Client: could not read response body:", zap.Error(err))
+		return err
 	}
-	fmt.Printf("client: response body: %s\n", resBody)
+	c.logger.Info("Client: response body:", zap.ByteString("body", resBody))
 
 	return nil
 }
 
 func (c *Client) SendBackupToControlServer() error {
-	err := c.app.ExecuteBackupScript("backup.sh")
-	if err != nil {
-		fmt.Println("Error:", err)
-	}
+	//err := c.app.ExecuteBackupScript("backup.sh")
+	//if err != nil { 
+	//	fmt.Println("Error:", err)
+	//}
+
+	//err := postFile("/Users/user/backup/test.sql.gz", "http://localhost:8080/api/upload")
+	//if err != nil {
+	//	fmt.Println("Error upload file:", err)
+	//}
 
 	return nil
 }
 
-func (c *Client) Run(doneCh chan struct{}) error {
+func (c *Client) Run(ctx context.Context) error {
 	ticker := time.NewTicker(5 * time.Second)
 	go func() {
 		for {
@@ -76,7 +90,7 @@ func (c *Client) Run(doneCh chan struct{}) error {
 				if err != nil {
 					return
 				}
-			case <-doneCh:
+			case <-ctx.Done():
 				ticker.Stop()
 			}
 		}
@@ -91,9 +105,53 @@ func (c *Client) Run(doneCh chan struct{}) error {
 				if err != nil {
 					return
 				}
+			case <-ctx.Done():
+				ticker.Stop()
 			}
 		}
 	}()
 
+	return nil
+}
+
+func postFile(filename string, targetUrl string) error {
+	bodyBuf := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuf)
+
+	// this step is very important
+	fileWriter, err := bodyWriter.CreateFormFile("files", filename)
+	if err != nil {
+		fmt.Println("error writing to buffer")
+		return err
+	}
+
+	// open file handle
+	fh, err := os.Open(filename)
+	if err != nil {
+		fmt.Println("error opening file")
+		return err
+	}
+	defer fh.Close()
+
+	//iocopy
+	_, err = io.Copy(fileWriter, fh)
+	if err != nil {
+		return err
+	}
+
+	contentType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+
+	resp, err := http.Post(targetUrl, contentType, bodyBuf)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	resp_body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	fmt.Println(resp.Status)
+	fmt.Println(string(resp_body))
 	return nil
 }

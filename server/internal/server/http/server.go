@@ -34,7 +34,9 @@ func NewServer(host, port string, app *app.App, router *Router, logg internallog
 	//	AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete, http.MethodOptions},
 	//}))
 
-	//e.Use(middleware.Static("/home/user/work/mountaineering/uploads"))
+	//e.Use(middleware.Static("/home/user/work/backups/server/uploads"))
+
+	//e.Static("/", "/home/user/work/backups/server/uploads")
 
 	return &Server{
 		host:   host,
@@ -46,9 +48,13 @@ func NewServer(host, port string, app *app.App, router *Router, logg internallog
 }
 
 func (f *Server) BuildRouters() {
+	f.e.Static("/", "uploads")
+	fs := http.FileServer(http.Dir("/Users/user/work/dev/backups/uploads"))
+	f.e.GET("/uploads/*", echo.WrapHandler(http.StripPrefix("/uploads/", fs)))
 
 	api := f.e.Group("/api")
 	api.GET("/command", f.router.CommandHandler)
+	api.POST("/upload", f.router.UploadFile)
 }
 
 func (f *Server) Start() error {

@@ -33,7 +33,7 @@ func main() {
 	}
 	defer logg.Sync()
 
-	_, cancel := signal.NotifyContext(context.Background(),
+	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
@@ -48,8 +48,7 @@ func main() {
 	workerUuid := uuid.New()
 	worker := internalhttp.NewClient(*app, logg, workerUuid)
 
-	doneCh := make(chan struct{})
-	if err := worker.Run(doneCh); err != nil {
+	if err = worker.Run(ctx); err != nil {
 		logg.Error("Failed start client", zap.Error(err))
 	}
 
@@ -59,6 +58,5 @@ func main() {
 	select {
 	case s := <-interrupt:
 		logg.Info("[+] app stop by signal:", zap.String("signal", s.String()))
-		<-doneCh
 	}
 }
