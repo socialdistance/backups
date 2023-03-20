@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 	internalapp "worker/internal/app"
 	internalstorage "worker/internal/storage"
@@ -66,17 +67,42 @@ func (c *Client) RequestToControlServer() error {
 	return nil
 }
 
+func (c *Client) ExecuteBackupScriptClient(wg *sync.WaitGroup) error {
+	defer wg.Done()
+	err := c.app.ExecuteBackupScript("backup.sh")
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+
+	return nil
+}
+
+func (c *Client) SendFile(wg *sync.WaitGroup) error {
+	// TODO: filename backup
+	fileNameBackup := fmt.Sprintf("/home/user/backup/backup-%d-%02d-%d.tar.gz", time.Now().Year(), time.Now().Month(), time.Now().Day())
+	defer wg.Done()
+	err := postFile(fileNameBackup, "http://localhost:8080/api/upload")
+	if err != nil {
+		fmt.Println("Error upload file:", err)
+	}
+
+	return nil
+}
+
 func (c *Client) SendBackupToControlServer() error {
-	//err := c.app.ExecuteBackupScript("backup.sh")
-	//if err != nil { 
-	//	fmt.Println("Error:", err)
-	//}
+	wg := &sync.WaitGroup{}
 
-	//err := postFile("/Users/user/backup/test.sql.gz", "http://localhost:8080/api/upload")
-	//if err != nil {
-	//	fmt.Println("Error upload file:", err)
-	//}
+	wg.Add(2)
+	go func() {
+		if err := c.ExecuteBackupScriptClient(wg); err != nil {
+			return
+		}
+		if err := c.SendFile(wg); err != nil {
+			return
+		}
+	}()
 
+	wg.Wait()
 	return nil
 }
 
@@ -96,7 +122,7 @@ func (c *Client) Run(ctx context.Context) error {
 		}
 	}()
 
-	ticker2 := time.NewTicker(2 * time.Second)
+	ticker2 := time.NewTicker(10 * time.Second)
 	go func() {
 		for {
 			select {
@@ -114,6 +140,7 @@ func (c *Client) Run(ctx context.Context) error {
 	return nil
 }
 
+// TODO: replace it to app layer
 func postFile(filename string, targetUrl string) error {
 	bodyBuf := &bytes.Buffer{}
 	bodyWriter := multipart.NewWriter(bodyBuf)

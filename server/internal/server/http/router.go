@@ -60,7 +60,7 @@ func (r *Router) UploadFile(c echo.Context) error {
 		defer src.Close()
 
 		// Destination
-		dst, err := os.Create(fmt.Sprintf("/Users/user/work/dev/backups/uploads/%s", file.Filename))
+		dst, err := os.Create(fmt.Sprintf("/home/user/work/backup/uploads/%s", file.Filename))
 		if err != nil {
 			return err
 		}

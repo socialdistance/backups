@@ -28,13 +28,13 @@ func NewApp(logg Logger) *App {
 func (a *App) ExecuteBackupScript(path string) error {
 	a.logger.Info("[+] Executing backup script")
 
-	cmd, err := exec.Command("/bin/sh", path).Output()
+	_, err := exec.Command("/bin/sh", path).Output()
 	if err != nil {
 		fmt.Printf("error %s", err)
 		return err
 	}
-	output := string(cmd)
-	fmt.Println("OUTPUT", output)
+	//output := string(cmd)
+	//fmt.Println("OUTPUT", output)
 
 	return nil
 }
