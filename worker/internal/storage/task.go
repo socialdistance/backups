@@ -26,7 +26,7 @@ func NewTask(workerUid uuid.UUID) (*Task, error) {
 		return nil, err
 	}
 
-	t.Command = "test_command"
+	t.Command = "cron"
 
 	return &t, nil
 }
