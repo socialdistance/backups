@@ -4,16 +4,23 @@ ROOTDIR="/home/user/backup/"
 YEAR=`date +%Y`
 MONTH=`date +%m`
 DAY=`date +%d`
-HOUR=`date +%H`
 SERVER="localhost"
 #BLACKLIST="information_schema performance_schema"
 ADDITIONAL_MYSQLDUMP_PARAMS="--skip-lock-tables --skip-add-locks --quick --single-transaction"
 MYSQL_USER="root"
 MYSQL_PASSWORD="qwerty123"
 
-MYSQLTARGET="$ROOTDIR/backup-mysql-${YEAR}-${MONTH}-${DAY}.sql"
-TARTARGET="$ROOTDIR/backup-${YEAR}-${MONTH}-${DAY}.tar.gz"
+DOCKERCONTAINERNAME="database_backup"
 
+PG_USER="postgres"
+PG_PASSWORD=""
+
+MYSQLTARGET="$ROOTDIR/backup-mysql-${YEAR}-${MONTH}-${DAY}.sql"
+PSQLTARGET="$ROOTDIR/backup-postgresql-${YEAR}-${MONTH}-${DAY}.sql"
+PSQLTARGETDOCKER="$ROOTDIR/backup-postgresql-docker-${YEAR}-${MONTH}-${DAY}.sql"
+
+
+TARTARGET="$ROOTDIR/backup-${YEAR}-${MONTH}-${DAY}.tar.gz"
 
 # Read MySQL password from stdin if empty
 if [ -z "${MYSQL_PASSWORD}" ]; then
@@ -33,7 +40,15 @@ fi
 
 echo "running mysqldump"
 mysqldump ${ADDITIONAL_MYSQLDUMP_PARAMS} -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -h $SERVER $db --all-databases > $MYSQLTARGET
-tar -czvf $TARTARGET $ROOTDIR
+
+echo "running psqldump"
+#pg_dump -U $PG_USER $DATABASE > $PSQLTARGET
+pg_dump > $PSQLTARGET
+
+echo "running psqldump in docker"
+docker exec -t $DOCKERCONTAINERNAME pg_dumpall -c -U postgres > $PSQLTARGETDOCKER
+
+tar -czvf $TARTARGET -C $ROOTDIR .
 
 echo
 echo "dump completed"

@@ -28,6 +28,8 @@ type ResponseTask struct {
 	Timestamp   time.Time
 }
 
+const targetURL = "http://localhost:8080"
+
 func NewClient(app internalapp.App, logger internalapp.Logger, workerUuid uuid.UUID) *Client {
 	return &Client{
 		logger:     logger,
@@ -37,14 +39,15 @@ func NewClient(app internalapp.App, logger internalapp.Logger, workerUuid uuid.U
 }
 
 func (c *Client) RequestToControlServer() (*ResponseTask, error) {
-	// TODO: refactor
 	taskInfo, err := internalstorage.NewTask(c.workerUuid)
 	if err != nil {
 		c.logger.Error("TaskInfo can't create object with err:", zap.Error(err))
 		return nil, err
 	}
 
-	url := fmt.Sprintf("http://localhost:8080/api/command?id=%s&address=%s&command=%s&hostname=%s", taskInfo.WorkerUuid, taskInfo.Address, taskInfo.Command, taskInfo.Hostname)
+	url := fmt.Sprintf("%s/api/command?id=%s&address=%s&command=%s&hostname=%s", targetURL, taskInfo.WorkerUuid, taskInfo.Address, taskInfo.Command, taskInfo.Hostname)
+
+	fmt.Println("URL", url)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -62,7 +65,9 @@ func (c *Client) RequestToControlServer() (*ResponseTask, error) {
 	if err != nil {
 		c.logger.Error("Client: could not read response body:", zap.Error(err))
 		return nil, err
+
 	}
+	c.logger.Info("Client: status code:", zap.String("body", res.Status))
 	c.logger.Info("Client: response body:", zap.ByteString("body", resBody))
 
 	responseTask := ResponseTask{}
@@ -89,7 +94,7 @@ func (c *Client) ExecuteBackupScriptClient(wg *sync.WaitGroup) error {
 func (c *Client) SendFile(wg *sync.WaitGroup) error {
 	fileNameBackup := fmt.Sprintf("/home/user/backup/backup-%d-%02d-%d.tar.gz", time.Now().Year(), time.Now().Month(), time.Now().Day())
 	defer wg.Done()
-	err := c.app.PostFile(fileNameBackup, "http://localhost:8080/api/upload")
+	err := c.app.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", targetURL))
 	if err != nil {
 		c.logger.Error("Error upload file:", zap.Error(err))
 		return err
@@ -101,6 +106,7 @@ func (c *Client) SendFile(wg *sync.WaitGroup) error {
 func (c *Client) SendBackupToControlServer() error {
 	wg := &sync.WaitGroup{}
 
+	// TODO: executing twice backupscript
 	wg.Add(2)
 	go func() {
 		if err := c.ExecuteBackupScriptClient(wg); err != nil {
@@ -127,7 +133,6 @@ func (c *Client) Run(ctx context.Context) error {
 				}
 				switch responseTask.Command {
 				case "manual":
-					fmt.Println("Manual ticker")
 					err = c.SendBackupToControlServer()
 					if err != nil {
 						return
@@ -144,7 +149,6 @@ func (c *Client) Run(ctx context.Context) error {
 		for {
 			select {
 			case <-cronTicker.C:
-				fmt.Println("Cron ticker")
 				err := c.SendBackupToControlServer()
 				if err != nil {
 					return
