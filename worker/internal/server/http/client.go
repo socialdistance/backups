@@ -8,7 +8,6 @@ import (
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
-	"sync"
 	"time"
 	internalapp "worker/internal/app"
 	internalstorage "worker/internal/storage"
@@ -47,8 +46,6 @@ func (c *Client) RequestToControlServer() (*ResponseTask, error) {
 
 	url := fmt.Sprintf("%s/api/command?id=%s&address=%s&command=%s&hostname=%s", targetURL, taskInfo.WorkerUuid, taskInfo.Address, taskInfo.Command, taskInfo.Hostname)
 
-	fmt.Println("URL", url)
-
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		c.logger.Error("Client: could not create request:", zap.Error(err))
@@ -80,44 +77,51 @@ func (c *Client) RequestToControlServer() (*ResponseTask, error) {
 	return &responseTask, nil
 }
 
-func (c *Client) ExecuteBackupScriptClient(wg *sync.WaitGroup) error {
-	defer wg.Done()
-	err := c.app.ExecuteBackupScript("backup.sh")
-	if err != nil {
-		c.logger.Error("Error execute bash script:", zap.Error(err))
-		return err
-	}
+func (c *Client) ExecuteBackupScriptClient(doneCh chan struct{}) chan struct{} {
+	go func() {
+		fmt.Println("Test1")
+		//err := c.app.ExecuteBackupScript("backup.sh")
+		//if err != nil {
+		//	c.logger.Error("Error execute bash script:", zap.Error(err))
+		//	//errorCh <- err
+		//}
+
+		//doneCh <- struct{}{}
+		<-doneCh
+	}()
 
 	return nil
 }
 
-func (c *Client) SendFile(wg *sync.WaitGroup) error {
-	fileNameBackup := fmt.Sprintf("/home/user/backup/backup-%d-%02d-%d.tar.gz", time.Now().Year(), time.Now().Month(), time.Now().Day())
-	defer wg.Done()
-	err := c.app.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", targetURL))
-	if err != nil {
-		c.logger.Error("Error upload file:", zap.Error(err))
-		return err
-	}
+func (c *Client) SendFile(doneCh chan struct{}) chan struct{} {
+	go func() {
+		fmt.Println("test2")
+		//fileNameBackup := fmt.Sprintf("/home/user/backup/backup-%d-%02d-%d.tar.gz", time.Now().Year(), time.Now().Month(), time.Now().Day())
+		//err := c.app.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", targetURL))
+		//if err != nil {
+		//	c.logger.Error("Error upload file:", zap.Error(err))
+		//}
+
+		doneCh <- struct{}{}
+		//<-doneCh
+	}()
 
 	return nil
 }
 
 func (c *Client) SendBackupToControlServer() error {
-	wg := &sync.WaitGroup{}
+	doneCh := make(chan struct{})
 
-	// TODO: executing twice backupscript
-	wg.Add(2)
-	go func() {
-		if err := c.ExecuteBackupScriptClient(wg); err != nil {
-			return
-		}
-		if err := c.SendFile(wg); err != nil {
-			return
-		}
-	}()
+	err := c.ExecuteBackupScriptClient(doneCh)
+	if err != nil {
+		fmt.Println("ERR1:", err)
+	}
 
-	wg.Wait()
+	err = c.SendFile(doneCh)
+	if err != nil {
+		fmt.Println("err2", err)
+	}
+
 	return nil
 }
 
@@ -144,7 +148,7 @@ func (c *Client) Run(ctx context.Context) error {
 		}
 	}()
 
-	cronTicker := time.NewTicker(60 * time.Second)
+	cronTicker := time.NewTicker(10 * time.Second)
 	go func() {
 		for {
 			select {
