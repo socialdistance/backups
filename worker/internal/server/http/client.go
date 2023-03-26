@@ -86,8 +86,7 @@ func (c *Client) ExecuteBackupScriptClient(doneCh chan struct{}) chan struct{} {
 		//	//errorCh <- err
 		//}
 
-		//doneCh <- struct{}{}
-		<-doneCh
+		doneCh <- struct{}{}
 	}()
 
 	return nil
@@ -102,7 +101,7 @@ func (c *Client) SendFile(doneCh chan struct{}) chan struct{} {
 		//	c.logger.Error("Error upload file:", zap.Error(err))
 		//}
 
-		doneCh <- struct{}{}
+		//doneCh <- struct{}{}
 		//<-doneCh
 	}()
 
@@ -117,10 +116,14 @@ func (c *Client) SendBackupToControlServer() error {
 		fmt.Println("ERR1:", err)
 	}
 
-	err = c.SendFile(doneCh)
-	if err != nil {
-		fmt.Println("err2", err)
+	select {
+	case <-doneCh:
+		err = c.SendFile(doneCh)
+		if err != nil {
+			fmt.Println("err2", err)
+		}
 	}
+	close(doneCh)
 
 	return nil
 }
