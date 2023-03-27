@@ -14,8 +14,9 @@ import (
 )
 
 type Client struct {
-	logger internalapp.Logger
-	app    internalapp.App
+	logger    internalapp.Logger
+	app       internalapp.App
+	configURL string
 
 	workerUuid uuid.UUID
 }
@@ -27,12 +28,11 @@ type ResponseTask struct {
 	Timestamp   time.Time
 }
 
-const targetURL = "http://localhost:8080"
-
-func NewClient(app internalapp.App, logger internalapp.Logger, workerUuid uuid.UUID) *Client {
+func NewClient(app internalapp.App, logger internalapp.Logger, configURL string, workerUuid uuid.UUID) *Client {
 	return &Client{
 		logger:     logger,
 		app:        app,
+		configURL:  configURL,
 		workerUuid: workerUuid,
 	}
 }
@@ -44,7 +44,7 @@ func (c *Client) RequestToControlServer() (*ResponseTask, error) {
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/api/command?id=%s&address=%s&command=%s&hostname=%s", targetURL, taskInfo.WorkerUuid, taskInfo.Address, taskInfo.Command, taskInfo.Hostname)
+	url := fmt.Sprintf("%s/api/command?id=%s&address=%s&command=%s&hostname=%s", c.configURL, taskInfo.WorkerUuid, taskInfo.Address, taskInfo.Command, taskInfo.Hostname)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -140,10 +140,7 @@ func (c *Client) Run(ctx context.Context) error {
 				}
 				switch responseTask.Command {
 				case "manual":
-					err = c.SendBackupToControlServer()
-					if err != nil {
-						return
-					}
+					c.SendBackupToControlServer()
 				}
 			case <-ctx.Done():
 				requestTicker.Stop()
@@ -156,10 +153,7 @@ func (c *Client) Run(ctx context.Context) error {
 		for {
 			select {
 			case <-cronTicker.C:
-				err := c.SendBackupToControlServer()
-				if err != nil {
-					return
-				}
+				c.SendBackupToControlServer()
 			case <-ctx.Done():
 				cronTicker.Stop()
 			}

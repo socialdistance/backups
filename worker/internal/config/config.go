@@ -7,30 +7,11 @@ import (
 )
 
 type Config struct {
-	Storage    StorageConf
-	HTTP       HttpConf
-	Cache      CacheConf
-	WorkerPool WorkerPoolConf
+	HTTP HTTPConf
 }
 
-type WorkerPoolConf struct {
-	NumWorkers  int `json:"numWorkers"`
-	ChannelSize int `json:"channelSize"`
-}
-
-type StorageConf struct {
-	Type string `json:"type"`
-	Dsn  string `json:"dsn"`
-}
-
-type HttpConf struct {
-	Host string `json:"host"`
-	Port string `json:"port"`
-}
-
-type CacheConf struct {
-	DefaultExpiration int `json:"defaultExpiration"`
-	CleanupInterval   int `json:"cleanupInterval"`
+type HTTPConf struct {
+	TargetUrl string `json:"targetUrl"`
 }
 
 func NewConfig() Config {

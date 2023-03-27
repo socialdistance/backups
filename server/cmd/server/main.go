@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -41,6 +40,7 @@ func main() {
 	config, err := internalconfig.LoadConfig(configFile)
 	if err != nil {
 		logg.Error("Failed load config", zap.Error(err))
+		panic(err)
 	}
 
 	store := internalstore.CreateStorage(ctx, *config)
@@ -73,13 +73,10 @@ func main() {
 		}
 	}()
 
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, syscall.SIGINT, syscall.SIGTERM)
-
 	select {
-	case s := <-interrupt:
-		logg.Info("[+] app stop by signal:", zap.String("signal", s.String()))
-		logg.Info("[+] workers stop by signal:", zap.String("signal", s.String()))
+	case <-ctx.Done():
+		logg.Info("[+] app stop by signal")
+		logg.Info("[+] workers stop by signal")
 		pool.Stop()
 		doneCh <- struct{}{}
 	}
@@ -105,7 +102,7 @@ func startCacheUpdate(storage internalapp.Storage, logger internalapp.Logger, ca
 						cache.Set(event.Worker_UUID, event, 5*time.Minute)
 					}
 
-					logger.Info("[+] Task procceed")
+					logger.Info("[+] Task proceed")
 
 					return nil
 				})

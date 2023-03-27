@@ -6,7 +6,6 @@ import (
 	"context"
 	"flag"
 	"github.com/google/uuid"
-	"os"
 	"os/signal"
 	"syscall"
 
@@ -31,32 +30,30 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	defer logg.Sync()
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	_, err = internalconfig.LoadConfig(configFile)
+	config, err := internalconfig.LoadConfig(configFile)
 	if err != nil {
 		logg.Error("Failed load config", zap.Error(err))
+		panic(err)
 	}
 
 	app := internalapp.NewApp(logg)
 
-	// TODO: i dont sure about this
 	workerUuid := uuid.New()
-	worker := internalhttp.NewClient(*app, logg, workerUuid)
+	worker := internalhttp.NewClient(*app, logg, config.HTTP.TargetUrl, workerUuid)
 
 	if err = worker.Run(ctx); err != nil {
 		logg.Error("Failed start client", zap.Error(err))
 	}
 
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, syscall.SIGINT, syscall.SIGTERM)
-
 	select {
-	case s := <-interrupt:
-		logg.Info("[+] app stop by signal:", zap.String("signal", s.String()))
+	case <-ctx.Done():
+		logg.Info("[+] app stop by signal")
 	}
 }
