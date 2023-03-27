@@ -1,13 +1,17 @@
 package http
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
+	"os"
 	"time"
 	internalapp "worker/internal/app"
 	internalstorage "worker/internal/storage"
@@ -22,10 +26,10 @@ type Client struct {
 }
 
 type ResponseTask struct {
-	ID          uuid.UUID
-	Command     string
-	Worker_UUID uuid.UUID
-	Timestamp   time.Time
+	ID         uuid.UUID
+	Command    string
+	WorkerUuid uuid.UUID
+	Timestamp  time.Time
 }
 
 func NewClient(app internalapp.App, logger internalapp.Logger, configURL string, workerUuid uuid.UUID) *Client {
@@ -77,53 +81,94 @@ func (c *Client) RequestToControlServer() (*ResponseTask, error) {
 	return &responseTask, nil
 }
 
-func (c *Client) ExecuteBackupScriptClient(doneCh chan struct{}) chan struct{} {
-	go func() {
-		fmt.Println("Test1")
-		//err := c.app.ExecuteBackupScript("backup.sh")
-		//if err != nil {
-		//	c.logger.Error("Error execute bash script:", zap.Error(err))
-		//	//errorCh <- err
-		//}
+func (c *Client) PostFile(filename string, targetUrl string) error {
+	bodyBuf := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuf)
 
-		doneCh <- struct{}{}
-	}()
+	// this step is very important
+	fileWriter, err := bodyWriter.CreateFormFile("files", filename)
+	if err != nil {
+		c.logger.Error("Error writing to buffer:", zap.Error(err))
+		return err
+	}
+
+	// open file handle
+	fh, err := os.Open(filename)
+	if err != nil {
+		c.logger.Error("Error opening file:", zap.Error(err))
+		return err
+	}
+	defer fh.Close()
+
+	//iocopy
+	_, err = io.Copy(fileWriter, fh)
+	if err != nil {
+		c.logger.Error("Error copy file:", zap.Error(err))
+		return err
+	}
+
+	contentType := bodyWriter.FormDataContentType()
+	bodyWriter.Close()
+
+	resp, err := http.Post(targetUrl, contentType, bodyBuf)
+	if err != nil {
+		c.logger.Error("Error send to targetUrl:", zap.Error(err))
+		return err
+	}
+	defer resp.Body.Close()
+
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		c.logger.Error("Error read body:", zap.Error(err))
+		return err
+	}
+
+	c.logger.Info("[+] Status code:", zap.String("status", resp.Status))
+	c.logger.Info("[+] Response:", zap.String("status", string(respBody)))
+	return nil
+}
+
+func (c *Client) ExecuteBackupScriptClient() error {
+	//go func() {
+	fmt.Println("Test1")
+	//err := c.app.ExecuteBackupScript("backup.sh")
+	//if err != nil {
+	//	c.logger.Error("Error execute bash script:", zap.Error(err))
+	//	//errorCh <- err
+	//}
+
+	//doneCh <- struct{}{}
+	//}()
 
 	return nil
 }
 
-func (c *Client) SendFile(doneCh chan struct{}) chan struct{} {
-	go func() {
-		fmt.Println("test2")
-		//fileNameBackup := fmt.Sprintf("/home/user/backup/backup-%d-%02d-%d.tar.gz", time.Now().Year(), time.Now().Month(), time.Now().Day())
-		//err := c.app.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", targetURL))
-		//if err != nil {
-		//	c.logger.Error("Error upload file:", zap.Error(err))
-		//}
+func (c *Client) SendFile() error {
+	//go func() {
+	fmt.Println("test2")
+	//fileNameBackup := fmt.Sprintf("/home/user/backup/backup-%d-%02d-%d.tar.gz", time.Now().Year(), time.Now().Month(), time.Now().Day())
+	//err := c.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", c.configURL))
+	//if err != nil {
+	//	c.logger.Error("Error upload file:", zap.Error(err))
+	//}
 
-		//doneCh <- struct{}{}
-		//<-doneCh
-	}()
+	//doneCh <- struct{}{}
+	//<-doneCh
+	//}()
 
 	return nil
 }
 
 func (c *Client) SendBackupToControlServer() error {
-	doneCh := make(chan struct{})
-
-	err := c.ExecuteBackupScriptClient(doneCh)
+	err := c.ExecuteBackupScriptClient()
 	if err != nil {
 		fmt.Println("ERR1:", err)
 	}
 
-	select {
-	case <-doneCh:
-		err = c.SendFile(doneCh)
-		if err != nil {
-			fmt.Println("err2", err)
-		}
+	err = c.SendFile()
+	if err != nil {
+		fmt.Println("err2", err)
 	}
-	close(doneCh)
 
 	return nil
 }
@@ -136,7 +181,7 @@ func (c *Client) Run(ctx context.Context) error {
 			case <-requestTicker.C:
 				responseTask, err := c.RequestToControlServer()
 				if err != nil {
-					return
+					c.logger.Error("Response task to control server have error:", zap.Error(err))
 				}
 				switch responseTask.Command {
 				case "manual":
