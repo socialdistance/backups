@@ -38,7 +38,7 @@ func (r *Router) CommandHandler(c echo.Context) error {
 	taskResponse, err := r.app.CommandHandlerApp(c.Request().Context(), taskIdStr, task.Address, task.Command, task.Hostname)
 	if err != nil {
 		// TODO:
-		return c.JSON(http.StatusBadRequest, "something wrong")
+		return c.JSON(http.StatusBadRequest, err)
 	}
 
 	return c.JSON(http.StatusOK, taskResponse)
@@ -70,7 +70,6 @@ func (r *Router) UploadFile(c echo.Context) error {
 		if _, err = io.Copy(dst, src); err != nil {
 			return err
 		}
-
 	}
 
 	return c.JSON(http.StatusOK, "test")

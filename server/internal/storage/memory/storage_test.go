@@ -31,7 +31,7 @@ func TestStorage(t *testing.T) {
 			return
 		}
 
-		findEvent, err := storage.Find(event.Worker_UUID)
+		findEvent, err := storage.Find(event.WorkerUuid)
 		if err != nil {
 			t.FailNow()
 			return
@@ -46,7 +46,7 @@ func TestStorage(t *testing.T) {
 		require.Len(t, events, 1)
 		require.Equal(t, *event, events[0])
 
-		err = storage.DeleteEvent(event.Worker_UUID)
+		err = storage.DeleteEvent(event.WorkerUuid)
 		fmt.Println("DELETE", err)
 		if err != nil {
 			t.FailNow()

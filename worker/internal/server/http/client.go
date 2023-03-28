@@ -129,48 +129,36 @@ func (c *Client) PostFile(filename string, targetUrl string) error {
 }
 
 func (c *Client) ExecuteBackupScriptClient() error {
-	//go func() {
-	fmt.Println("Test1")
-	//err := c.app.ExecuteBackupScript("backup.sh")
-	//if err != nil {
-	//	c.logger.Error("Error execute bash script:", zap.Error(err))
-	//	//errorCh <- err
-	//}
-
-	//doneCh <- struct{}{}
-	//}()
+	err := c.app.ExecuteBackupScript("backup.sh")
+	if err != nil {
+		c.logger.Error("Error execute bash script:", zap.Error(err))
+		return err
+	}
 
 	return nil
 }
 
 func (c *Client) SendFile() error {
-	//go func() {
-	fmt.Println("test2")
-	//fileNameBackup := fmt.Sprintf("/home/user/backup/backup-%d-%02d-%d.tar.gz", time.Now().Year(), time.Now().Month(), time.Now().Day())
-	//err := c.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", c.configURL))
-	//if err != nil {
-	//	c.logger.Error("Error upload file:", zap.Error(err))
-	//}
-
-	//doneCh <- struct{}{}
-	//<-doneCh
-	//}()
+	fileNameBackup := fmt.Sprintf("/home/user/backup/backup-%d-%02d-%d.tar.gz", time.Now().Year(), time.Now().Month(), time.Now().Day())
+	err := c.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", c.configURL))
+	if err != nil {
+		c.logger.Error("Error upload file:", zap.Error(err))
+		return err
+	}
 
 	return nil
 }
 
-func (c *Client) SendBackupToControlServer() error {
+func (c *Client) SendBackupToControlServer() {
 	err := c.ExecuteBackupScriptClient()
 	if err != nil {
-		fmt.Println("ERR1:", err)
+		c.logger.Error("Error execute bash script", zap.Error(err))
 	}
 
 	err = c.SendFile()
 	if err != nil {
-		fmt.Println("err2", err)
+		c.logger.Error("Error send file", zap.Error(err))
 	}
-
-	return nil
 }
 
 func (c *Client) Run(ctx context.Context) error {

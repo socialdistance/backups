@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"go.uber.org/zap"
 	"os/exec"
 )
@@ -23,11 +24,13 @@ func NewApp(logg Logger) *App {
 func (a *App) ExecuteBackupScript(path string) error {
 	a.logger.Info("[+] Executing backup script")
 
-	_, err := exec.Command("/bin/sh", path).Output()
+	out, err := exec.Command("/bin/sh", path).Output()
 	if err != nil {
 		a.logger.Error("Error execute backup script:", zap.Error(err))
 		return err
 	}
+
+	fmt.Println("OUT:", string(out))
 
 	return nil
 }

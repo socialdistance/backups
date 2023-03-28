@@ -1,17 +1,17 @@
 package http
 
 type TaskDTO struct {
-	ID          string `json:"id" from:"id" query:"id"`
-	Command     string `json:"command" from:"command" query:"command"`
-	Worker_UUID string `json:"worker_uuid" from:"worker_uuid" query:"worker_uuid"`
-	Timestamp   string `json:"timestamp" from:"timestamp" query:"timestamp"`
+	ID         string `json:"id" query:"id"`
+	Command    string `json:"command" query:"command"`
+	WorkerUuid string `json:"worker_uuid" query:"worker_uuid"`
+	Timestamp  string `json:"timestamp" query:"timestamp"`
 }
 
 type WorkerTaskDTO struct {
-	ID       string `json:"id" from:"id" query:"id"`
-	Address  string `json:"address" from:"address" query:"address"`
-	Command  string `json:"command" from:"command" query:"command"`
-	Hostname string `json:"hostname" from:"hostname" query:"hostname"`
+	ID       string `json:"id" query:"id"`
+	Address  string `json:"address" query:"address"`
+	Command  string `json:"command" query:"command"`
+	Hostname string `json:"hostname" query:"hostname"`
 }
 
 // type ResponseDTO struct {

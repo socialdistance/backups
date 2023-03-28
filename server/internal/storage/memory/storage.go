@@ -22,11 +22,11 @@ func (s *Storage) CreateEvent(e storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, ok := s.events[e.Worker_UUID]; ok {
+	if _, ok := s.events[e.WorkerUuid]; ok {
 		return storage.ErrEventExist
 	}
 
-	s.events[e.Worker_UUID] = e
+	s.events[e.WorkerUuid] = e
 
 	return nil
 }

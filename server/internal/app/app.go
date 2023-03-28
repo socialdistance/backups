@@ -19,12 +19,8 @@ type App struct {
 }
 
 type Logger interface {
-	Debug(message string, fields ...zap.Field)
 	Info(message string, fields ...zap.Field)
 	Error(message string, fields ...zap.Field)
-	Fatal(message string, fields ...zap.Field)
-	With(fields ...zap.Field) *zap.Logger
-	Sync() error
 }
 
 type Cache interface {
@@ -63,27 +59,28 @@ func (a *App) CommandHandlerApp(ctx context.Context, workerUuid uuid.UUID, addre
 	// и обновлять данные из кеша. Тем самым я гарантирую, что в кеше каждые 5 минут будут актуальные данные
 	// Даже если они устареют, через 5 минут они обновяться и воркеры будут получать обновленные данные каждые 5 минут
 	if !found {
-		timestamp, err := time.Parse("2006-01-02 15:04:05", "2022-03-14 12:00:00")
-		if err != nil {
-			return nil, err
-		}
+		timestamp := time.Now()
+		//timestamp, err := time.Parse("2006-01-02 15:04:05", time.Now().Format(time.RFC3339))
+		//if err != nil {
+		//	return nil, err
+		//}
 
 		event = internalstorage.NewEvent(
 			address, command, hostname, timestamp, workerUuid)
 
-		a.cache.Set(event.Worker_UUID, *event, 5*time.Minute)
-		err = a.storage.CreateEvent(*event)
+		a.cache.Set(event.WorkerUuid, *event, 5*time.Minute)
+		err := a.storage.CreateEvent(*event)
 		if err != nil {
 			a.logger.Error("[-] Failed create event: ", zap.Error(err))
 			return nil, err
 		}
 
-		workerTask := internalstorage.NewTask(event.Command, event.Worker_UUID, timestamp)
+		workerTask := internalstorage.NewTask(event.Command, event.WorkerUuid, timestamp)
 
 		return workerTask, nil
 	}
 
-	workerTask := internalstorage.NewTask(workerEvent.Command, workerEvent.Worker_UUID, workerEvent.Timestamp)
+	workerTask := internalstorage.NewTask(workerEvent.Command, workerEvent.WorkerUuid, workerEvent.Timestamp)
 
 	return workerTask, nil
 }

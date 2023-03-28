@@ -4,11 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"server/internal/storage"
-	"time"
-
 	"github.com/google/uuid"
 	pgx4 "github.com/jackc/pgx/v4"
+	"server/internal/storage"
 )
 
 type Storage struct {
@@ -45,7 +43,7 @@ func (s *Storage) CreateEvent(e storage.Event) error {
 		($1, $2, $3, $4, $5, $6)
 	`
 
-	_, err := s.conn.Exec(s.ctx, sql, e.ID.String(), e.Address, e.Command, e.Hostname, e.Worker_UUID.String(), e.Timestamp.Format(time.RFC3339))
+	_, err := s.conn.Exec(s.ctx, sql, e.ID.String(), e.Address, e.Command, e.Hostname, e.WorkerUuid.String(), e.Timestamp)
 
 	return err
 }
@@ -60,16 +58,16 @@ func (s *Storage) DeleteEvent(id uuid.UUID) error {
 	return err
 }
 
-func (s *Storage) Find(worker_UUID uuid.UUID) (*storage.Event, error) {
+func (s *Storage) Find(workerUuid uuid.UUID) (*storage.Event, error) {
 	var event storage.Event
 	sql := `select id, address, command, hostname, worker_uuid, timestamp from events where worker_uuid = $1`
 
-	err := s.conn.QueryRow(s.ctx, sql, worker_UUID).Scan(
+	err := s.conn.QueryRow(s.ctx, sql, workerUuid).Scan(
 		&event.ID,
 		&event.Address,
 		&event.Command,
 		&event.Hostname,
-		&event.Worker_UUID,
+		&event.WorkerUuid,
 		&event.Timestamp,
 	)
 
@@ -88,7 +86,7 @@ func (s *Storage) FindAllEvents() ([]storage.Event, error) {
 	var events []storage.Event
 
 	sql := `
-		SELECT id, address, command, hostname, worker_uuid, timestamp  FROM events
+		SELECT id, address, command, hostname, worker_uuid, timestamp FROM events
 	`
 
 	rows, err := s.conn.Query(s.ctx, sql)
@@ -99,10 +97,11 @@ func (s *Storage) FindAllEvents() ([]storage.Event, error) {
 
 	for rows.Next() {
 		var evt storage.Event
-		if err := rows.Scan(&evt.ID, &evt.Address,
+		if err = rows.Scan(&evt.ID,
+			&evt.Address,
 			&evt.Command,
 			&evt.Hostname,
-			&evt.Worker_UUID,
+			&evt.WorkerUuid,
 			&evt.Timestamp); err != nil {
 			return nil, fmt.Errorf("cant convert result: %w", err)
 		}
@@ -110,7 +109,7 @@ func (s *Storage) FindAllEvents() ([]storage.Event, error) {
 		events = append(events, evt)
 	}
 
-	if err := rows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 

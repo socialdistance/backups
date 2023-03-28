@@ -95,11 +95,10 @@ func startCacheUpdate(storage internalapp.Storage, logger internalapp.Logger, ca
 					events, err := storage.FindAllEvents()
 					if err != nil {
 						logger.Error("Cant get all events for update cache", zap.Error(err))
-						return err
 					}
 
 					for _, event := range events {
-						cache.Set(event.Worker_UUID, event, 5*time.Minute)
+						cache.Set(event.WorkerUuid, event, 5*time.Minute)
 					}
 
 					logger.Info("[+] Task proceed")
