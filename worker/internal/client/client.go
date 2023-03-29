@@ -1,4 +1,4 @@
-package http
+package client
 
 import (
 	"bytes"
@@ -18,9 +18,10 @@ import (
 )
 
 type Client struct {
-	logger    internalapp.Logger
-	app       internalapp.App
-	configURL string
+	logger         internalapp.Logger
+	app            internalapp.App
+	targetURL      string
+	configFileName string
 
 	workerUuid uuid.UUID
 }
@@ -32,12 +33,13 @@ type ResponseTask struct {
 	Timestamp  time.Time
 }
 
-func NewClient(app internalapp.App, logger internalapp.Logger, configURL string, workerUuid uuid.UUID) *Client {
+func NewClient(app internalapp.App, logger internalapp.Logger, targetURL, configFileName string, workerUuid uuid.UUID) *Client {
 	return &Client{
-		logger:     logger,
-		app:        app,
-		configURL:  configURL,
-		workerUuid: workerUuid,
+		logger:         logger,
+		app:            app,
+		targetURL:      targetURL,
+		configFileName: configFileName,
+		workerUuid:     workerUuid,
 	}
 }
 
@@ -48,7 +50,7 @@ func (c *Client) RequestToControlServer() (*ResponseTask, error) {
 		return nil, err
 	}
 
-	url := fmt.Sprintf("%s/api/command?id=%s&address=%s&command=%s&hostname=%s", c.configURL, taskInfo.WorkerUuid, taskInfo.Address, taskInfo.Command, taskInfo.Hostname)
+	url := fmt.Sprintf("%s/api/command?id=%s&address=%s&command=%s&hostname=%s", c.targetURL, taskInfo.WorkerUuid, taskInfo.Address, taskInfo.Command, taskInfo.Hostname)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -139,8 +141,15 @@ func (c *Client) ExecuteBackupScriptClient() error {
 }
 
 func (c *Client) SendFile() error {
-	fileNameBackup := fmt.Sprintf("/home/user/backup/backup-%d-%02d-%d.tar.gz", time.Now().Year(), time.Now().Month(), time.Now().Day())
-	err := c.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", c.configURL))
+	taskInfo, err := internalstorage.NewTask(c.workerUuid)
+	if err != nil {
+		c.logger.Error("TaskInfo can't create object with err:", zap.Error(err))
+		return err
+	}
+	fmt.Println("TASK INFO", taskInfo)
+
+	fileNameBackup := fmt.Sprintf("%s/%s-backup-%d-%02d-%d.tar.gz", c.configFileName, taskInfo.Address, time.Now().Year(), time.Now().Month(), time.Now().Day())
+	err = c.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", c.targetURL))
 	if err != nil {
 		c.logger.Error("Error upload file:", zap.Error(err))
 		return err
@@ -169,7 +178,7 @@ func (c *Client) Run(ctx context.Context) error {
 			case <-requestTicker.C:
 				responseTask, err := c.RequestToControlServer()
 				if err != nil {
-					c.logger.Error("Response task to control server have error:", zap.Error(err))
+					c.logger.Error("Response task to control client have error:", zap.Error(err))
 				}
 				switch responseTask.Command {
 				case "manual":

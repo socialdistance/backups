@@ -15,12 +15,14 @@ DOCKERCONTAINERNAME="database_backup"
 PG_USER="postgres"
 PG_PASSWORD=""
 
+IP=$(ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}')
+
 MYSQLTARGET="$ROOTDIR/backup-mysql-${YEAR}-${MONTH}-${DAY}.sql"
 PSQLTARGET="$ROOTDIR/backup-postgresql-${YEAR}-${MONTH}-${DAY}.sql"
 PSQLTARGETDOCKER="$ROOTDIR/backup-postgresql-docker-${YEAR}-${MONTH}-${DAY}.sql"
 
 
-TARTARGET="$ROOTDIR/backup-${YEAR}-${MONTH}-${DAY}.tar.gz"
+TARTARGET="$ROOTDIR/${IP}-backup-${YEAR}-${MONTH}-${DAY}.tar.gz"
 
 # Read MySQL password from stdin if empty
 if [ -z "${MYSQL_PASSWORD}" ]; then

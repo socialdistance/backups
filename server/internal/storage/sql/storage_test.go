@@ -18,7 +18,7 @@ func TestStorageSql(t *testing.T) {
 	ctx := context.Background()
 	storage := NewConnect(ctx, "postgres://postgres:postgres@localhost:54321/backups?sslmode=disable")
 	if err := storage.Connect(ctx); err != nil {
-		t.Fatal("Failed to connect to DB server", err)
+		t.Fatal("Failed to connect to DB client", err)
 	}
 
 	t.Run("test SQL", func(t *testing.T) {
@@ -28,7 +28,7 @@ func TestStorageSql(t *testing.T) {
 			DeferrableMode: pgx4.NotDeferrable,
 		})
 		if err != nil {
-			t.Fatal("Failed to connect to DB server", err)
+			t.Fatal("Failed to connect to DB client", err)
 		}
 
 		workerUuid := uuid.New()

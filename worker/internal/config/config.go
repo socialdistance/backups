@@ -8,10 +8,15 @@ import (
 
 type Config struct {
 	HTTP HTTPConf
+	File FileName
 }
 
 type HTTPConf struct {
-	TargetUrl string `json:"targetUrl"`
+	TargetUrl string `json:"target_url"`
+}
+
+type FileName struct {
+	FileNameBackup string `json:"file_name_backup"`
 }
 
 func NewConfig() Config {

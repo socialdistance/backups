@@ -8,13 +8,12 @@ import (
 	"github.com/google/uuid"
 	"os/signal"
 	"syscall"
+	internalhttp "worker/internal/client"
 
+	"go.uber.org/zap"
 	internalapp "worker/internal/app"
 	internalconfig "worker/internal/config"
 	internallogger "worker/internal/logger"
-	internalhttp "worker/internal/server/http"
-
-	"go.uber.org/zap"
 )
 
 var configFile string
@@ -46,7 +45,7 @@ func main() {
 	app := internalapp.NewApp(logg)
 
 	workerUuid := uuid.New()
-	worker := internalhttp.NewClient(*app, logg, config.HTTP.TargetUrl, workerUuid)
+	worker := internalhttp.NewClient(*app, logg, config.HTTP.TargetUrl, config.File.FileNameBackup, workerUuid)
 
 	if err = worker.Run(ctx); err != nil {
 		logg.Error("Failed start client", zap.Error(err))

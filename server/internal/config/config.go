@@ -11,6 +11,7 @@ type Config struct {
 	HTTP       HttpConf
 	Cache      CacheConf
 	WorkerPool WorkerPoolConf
+	FileServer FileServerConf
 }
 
 type WorkerPoolConf struct {
@@ -31,6 +32,10 @@ type HttpConf struct {
 type CacheConf struct {
 	DefaultExpiration int `json:"defaultExpiration"`
 	CleanupInterval   int `json:"cleanupInterval"`
+}
+
+type FileServerConf struct {
+	Path string `json:"path"`
 }
 
 func NewConfig() Config {

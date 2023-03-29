@@ -14,5 +14,8 @@
   "workerpool": {
     "numWorkers": 1,
     "channelSize": 0
+  },
+  "fileserver": {
+    "path": "/home/user/work/backup/uploads"
   }
 }

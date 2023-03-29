@@ -1,5 +1,8 @@
 {
   "http": {
-    "targetUrl": "http://localhost:8080"
+    "target_url": "http://localhost:8080"
+  },
+  "file": {
+    "file_name_backup": "/home/user/backup"
   }
 }

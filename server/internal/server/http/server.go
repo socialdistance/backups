@@ -25,18 +25,7 @@ func NewServer(host, port string, app *app.App, router *Router, logg internallog
 	e := echo.New()
 	e.HideBanner = true
 
-	// e.Use(middleware.CORS())
 	e.Use(MiddlwareLogger(logg))
-
-	//e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-	//	AllowOrigins: []string{"http://localhost:3000"},
-	//	AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
-	//	AllowMethods: []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete, http.MethodOptions},
-	//}))
-
-	//e.Use(middleware.Static("/home/user/work/backups/server/uploads"))
-
-	//e.Static("/", "/home/user/work/backups/server/uploads")
 
 	return &Server{
 		host:   host,
@@ -49,7 +38,8 @@ func NewServer(host, port string, app *app.App, router *Router, logg internallog
 
 func (f *Server) BuildRouters() {
 	f.e.Static("/", "uploads")
-	fs := http.FileServer(http.Dir("/Users/user/work/dev/backups/uploads"))
+	//fs := http.FileServer(http.Dir("/Users/user/work/dev/backups/uploads"))
+	fs := http.FileServer(http.Dir("/home/user/work/backup/uploads"))
 	f.e.GET("/uploads/*", echo.WrapHandler(http.StripPrefix("/uploads/", fs)))
 
 	api := f.e.Group("/api")
@@ -59,7 +49,7 @@ func (f *Server) BuildRouters() {
 
 func (f *Server) Start() error {
 	if err := f.e.Start(fmt.Sprintf(":%s", f.port)); err != nil && err != http.ErrServerClosed {
-		return fmt.Errorf("server stopped: %w", err)
+		return fmt.Errorf("client stopped: %w", err)
 	}
 
 	return nil
@@ -70,7 +60,7 @@ func (f *Server) Stop() error {
 	defer cancel()
 
 	if err := f.e.Shutdown(optCtx); err != nil {
-		return fmt.Errorf("could not shutdown server gracefuly: %w", err)
+		return fmt.Errorf("could not shutdown client gracefuly: %w", err)
 	}
 
 	return nil

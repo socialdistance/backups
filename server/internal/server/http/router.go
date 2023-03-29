@@ -14,12 +14,15 @@ import (
 type Router struct {
 	logger internalapp.Logger
 	app    internalapp.App
+
+	fileServerConf string
 }
 
-func NewRouter(app internalapp.App, logger internalapp.Logger) *Router {
+func NewRouter(app internalapp.App, logger internalapp.Logger, fileServerConf string) *Router {
 	return &Router{
-		logger: logger,
-		app:    app,
+		logger:         logger,
+		app:            app,
+		fileServerConf: fileServerConf,
 	}
 }
 
@@ -37,7 +40,6 @@ func (r *Router) CommandHandler(c echo.Context) error {
 
 	taskResponse, err := r.app.CommandHandlerApp(c.Request().Context(), taskIdStr, task.Address, task.Command, task.Hostname)
 	if err != nil {
-		// TODO:
 		return c.JSON(http.StatusBadRequest, err)
 	}
 
@@ -60,7 +62,8 @@ func (r *Router) UploadFile(c echo.Context) error {
 		defer src.Close()
 
 		// Destination
-		dst, err := os.Create(fmt.Sprintf("/home/user/work/backup/uploads/%s", file.Filename))
+		// TODO: add hostname/address
+		dst, err := os.Create(fmt.Sprintf("%s/%s", r.fileServerConf, file.Filename))
 		if err != nil {
 			return err
 		}
@@ -72,5 +75,5 @@ func (r *Router) UploadFile(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, "test")
+	return c.JSON(http.StatusOK, "Upload successfully")
 }

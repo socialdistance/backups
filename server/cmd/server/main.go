@@ -58,7 +58,7 @@ func main() {
 
 	pool.Start()
 
-	httpHandler := internalhttp.NewRouter(*app, logg)
+	httpHandler := internalhttp.NewRouter(*app, logg, config.FileServer.Path)
 	server := internalhttp.NewServer(config.HTTP.Host, config.HTTP.Port, app, httpHandler, *logg)
 
 	doneCh := make(chan struct{})
@@ -68,7 +68,7 @@ func main() {
 		server.BuildRouters()
 
 		if err = server.Start(); err != nil {
-			logg.Info("failed to start http server: " + err.Error())
+			logg.Info("failed to start http client: " + err.Error())
 			cancel()
 		}
 	}()
@@ -81,7 +81,7 @@ func main() {
 		doneCh <- struct{}{}
 	}
 	if err = server.Stop(); err != nil {
-		logg.Error("[-] failed to stop http server: " + err.Error())
+		logg.Error("[-] failed to stop http client: " + err.Error())
 	}
 }
 
