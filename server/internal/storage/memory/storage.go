@@ -44,11 +44,15 @@ func (s *Storage) DeleteEvent(id uuid.UUID) error {
 	return nil
 }
 
-func (s *Storage) Find(worker_UUID uuid.UUID) (*storage.Event, error) {
+func (s *Storage) UpdateCommand(e storage.Event) error {
+	panic("implement me")
+}
+
+func (s *Storage) Find(workerUuid uuid.UUID) (*storage.Event, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if event, ok := s.events[worker_UUID]; ok {
+	if event, ok := s.events[workerUuid]; ok {
 		return &event, nil
 	}
 

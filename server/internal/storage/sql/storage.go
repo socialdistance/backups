@@ -48,6 +48,19 @@ func (s *Storage) CreateEvent(e storage.Event) error {
 	return err
 }
 
+func (s *Storage) UpdateCommand(e storage.Event) error {
+	sql := `
+		UPDATE events SET command = $1 WHERE worker_uuid = $2
+	`
+
+	_, err := s.conn.Exec(s.ctx, sql, e.Command, e.WorkerUuid)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
 func (s *Storage) DeleteEvent(id uuid.UUID) error {
 	sql := `
 		DELETE FROM events where id=$1
@@ -60,7 +73,7 @@ func (s *Storage) DeleteEvent(id uuid.UUID) error {
 
 func (s *Storage) Find(workerUuid uuid.UUID) (*storage.Event, error) {
 	var event storage.Event
-	sql := `select id, address, command, hostname, worker_uuid, timestamp from events where worker_uuid = $1`
+	sql := `SELECT id, address, command, hostname, worker_uuid, timestamp FROM events WHERE worker_uuid = $1`
 
 	err := s.conn.QueryRow(s.ctx, sql, workerUuid).Scan(
 		&event.ID,

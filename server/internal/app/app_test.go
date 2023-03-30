@@ -25,7 +25,7 @@ func TestApp(t *testing.T) {
 
 	memmoryStorage := internalstorage.NewMemory()
 
-	pool, _ := workerpool.NewPool(1, 0)
+	pool, _ := workerpool.NewPool(1, 0, logg)
 
 	ctx := context.Background()
 

@@ -50,6 +50,7 @@ func (c *Client) RequestToControlServer() (*ResponseTask, error) {
 		return nil, err
 	}
 
+	// TODO: command always cron
 	url := fmt.Sprintf("%s/api/command?id=%s&address=%s&command=%s&hostname=%s", c.targetURL, taskInfo.WorkerUuid, taskInfo.Address, taskInfo.Command, taskInfo.Hostname)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -146,7 +147,6 @@ func (c *Client) SendFile() error {
 		c.logger.Error("TaskInfo can't create object with err:", zap.Error(err))
 		return err
 	}
-	fmt.Println("TASK INFO", taskInfo)
 
 	fileNameBackup := fmt.Sprintf("%s/%s-backup-%d-%02d-%d.tar.gz", c.configFileName, taskInfo.Address, time.Now().Year(), time.Now().Month(), time.Now().Day())
 	err = c.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", c.targetURL))
@@ -190,7 +190,7 @@ func (c *Client) Run(ctx context.Context) error {
 		}
 	}()
 
-	cronTicker := time.NewTicker(10 * time.Second)
+	cronTicker := time.NewTicker(12 * time.Hour)
 	go func() {
 		for {
 			select {

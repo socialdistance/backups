@@ -2,7 +2,6 @@ package sql
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -33,7 +32,7 @@ func TestStorageSql(t *testing.T) {
 
 		workerUuid := uuid.New()
 
-		timestamp := time.Now().Format(time.RFC3339)
+		timestamp := time.Now()
 
 		event := internalstorage.NewEvent("hostname_test", "command_test", "description_test", timestamp, workerUuid)
 
@@ -42,13 +41,20 @@ func TestStorageSql(t *testing.T) {
 			t.FailNow()
 			return
 		}
+		event.Command = "test"
+
+		err = storage.UpdateCommand(*event)
+		if err != nil {
+			t.FailNow()
+			return
+		}
+		require.Nil(t, err)
 
 		saved, err := storage.FindAllEvents()
 		if err != nil {
 			t.FailNow()
 			return
 		}
-		fmt.Println(saved)
 		require.Len(t, saved, 1)
 		require.Equal(t, event.Command, saved[0].Command)
 

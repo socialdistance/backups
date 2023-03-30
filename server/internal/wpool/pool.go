@@ -9,12 +9,8 @@ import (
 )
 
 type Logger interface {
-	Debug(message string, fields ...zap.Field)
 	Info(message string, fields ...zap.Field)
 	Error(message string, fields ...zap.Field)
-	Fatal(message string, fields ...zap.Field)
-	With(fields ...zap.Field) *zap.Logger
-	Sync() error
 }
 
 type Pool struct {
