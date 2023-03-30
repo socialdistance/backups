@@ -18,8 +18,9 @@ import (
 )
 
 type Client struct {
-	logger         internalapp.Logger
-	app            internalapp.App
+	logger internalapp.Logger
+	app    internalapp.App
+
 	targetURL      string
 	configFileName string
 
@@ -50,7 +51,6 @@ func (c *Client) RequestToControlServer() (*ResponseTask, error) {
 		return nil, err
 	}
 
-	// TODO: command always cron
 	url := fmt.Sprintf("%s/api/command?id=%s&address=%s&command=%s&hostname=%s", c.targetURL, taskInfo.WorkerUuid, taskInfo.Address, taskInfo.Command, taskInfo.Hostname)
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -132,28 +132,31 @@ func (c *Client) PostFile(filename string, targetUrl string) error {
 }
 
 func (c *Client) ExecuteBackupScriptClient() error {
-	err := c.app.ExecuteBackupScript("backup.sh")
-	if err != nil {
-		c.logger.Error("Error execute bash script:", zap.Error(err))
-		return err
-	}
+	//err := c.app.ExecuteBackupScript("backup.sh")
+	//if err != nil {
+	//	c.logger.Error("Error execute bash script:", zap.Error(err))
+	//	return err
+	//}
+
+	c.logger.Info("Testing execute backup script...")
 
 	return nil
 }
 
 func (c *Client) SendFile() error {
-	taskInfo, err := internalstorage.NewTask(c.workerUuid)
-	if err != nil {
-		c.logger.Error("TaskInfo can't create object with err:", zap.Error(err))
-		return err
-	}
-
-	fileNameBackup := fmt.Sprintf("%s/%s-backup-%d-%02d-%d.tar.gz", c.configFileName, taskInfo.Address, time.Now().Year(), time.Now().Month(), time.Now().Day())
-	err = c.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", c.targetURL))
-	if err != nil {
-		c.logger.Error("Error upload file:", zap.Error(err))
-		return err
-	}
+	//taskInfo, err := internalstorage.NewTask(c.workerUuid)
+	//if err != nil {
+	//	c.logger.Error("TaskInfo can't create object with err:", zap.Error(err))
+	//	return err
+	//}
+	//
+	//fileNameBackup := fmt.Sprintf("%s/%s-backup-%d-%02d-%d.tar.gz", c.configFileName, taskInfo.Address, time.Now().Year(), time.Now().Month(), time.Now().Day())
+	//err = c.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", c.targetURL))
+	//if err != nil {
+	//	c.logger.Error("Error upload file:", zap.Error(err))
+	//	return err
+	//}
+	c.logger.Info("Testing send file...")
 
 	return nil
 }

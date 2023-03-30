@@ -54,6 +54,10 @@ func (r *Router) UploadFile(c echo.Context) error {
 	files := form.File["files"]
 
 	for _, file := range files {
+		pr := &Progress{
+			TotalSize: file.Size,
+		}
+
 		// Source
 		src, err := file.Open()
 		if err != nil {
@@ -62,7 +66,6 @@ func (r *Router) UploadFile(c echo.Context) error {
 		defer src.Close()
 
 		// Destination
-		// TODO: add hostname/address
 		dst, err := os.Create(fmt.Sprintf("%s/%s", r.fileServerConf, file.Filename))
 		if err != nil {
 			return err
@@ -70,7 +73,7 @@ func (r *Router) UploadFile(c echo.Context) error {
 		defer dst.Close()
 
 		// Copy
-		if _, err = io.Copy(dst, src); err != nil {
+		if _, err = io.Copy(dst, io.TeeReader(src, pr)); err != nil {
 			return err
 		}
 	}
