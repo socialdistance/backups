@@ -132,31 +132,32 @@ func (c *Client) PostFile(filename string, targetUrl string) error {
 }
 
 func (c *Client) ExecuteBackupScriptClient() error {
-	//err := c.app.ExecuteBackupScript("backup.sh")
-	//if err != nil {
-	//	c.logger.Error("Error execute bash script:", zap.Error(err))
-	//	return err
-	//}
+	c.logger.Info("[+] Executing backup script...")
 
-	c.logger.Info("Testing execute backup script...")
+	err := c.app.ExecuteBackupScript("backup.sh")
+	if err != nil {
+		c.logger.Error("Error execute bash script:", zap.Error(err))
+		return err
+	}
 
 	return nil
 }
 
 func (c *Client) SendFile() error {
-	//taskInfo, err := internalstorage.NewTask(c.workerUuid)
-	//if err != nil {
-	//	c.logger.Error("TaskInfo can't create object with err:", zap.Error(err))
-	//	return err
-	//}
-	//
-	//fileNameBackup := fmt.Sprintf("%s/%s-backup-%d-%02d-%d.tar.gz", c.configFileName, taskInfo.Address, time.Now().Year(), time.Now().Month(), time.Now().Day())
-	//err = c.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", c.targetURL))
-	//if err != nil {
-	//	c.logger.Error("Error upload file:", zap.Error(err))
-	//	return err
-	//}
-	c.logger.Info("Testing send file...")
+	c.logger.Info("[+] Sending file...")
+
+	taskInfo, err := internalstorage.NewTask(c.workerUuid)
+	if err != nil {
+		c.logger.Error("TaskInfo can't create object with err:", zap.Error(err))
+		return err
+	}
+
+	fileNameBackup := fmt.Sprintf("%s/%s-backup-%d-%02d-%d.tar.gz", c.configFileName, taskInfo.Address, time.Now().Year(), time.Now().Month(), time.Now().Day())
+	err = c.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", c.targetURL))
+	if err != nil {
+		c.logger.Error("Error upload file:", zap.Error(err))
+		return err
+	}
 
 	return nil
 }

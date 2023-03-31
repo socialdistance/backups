@@ -54,9 +54,10 @@ func (r *Router) UploadFile(c echo.Context) error {
 	files := form.File["files"]
 
 	for _, file := range files {
-		pr := &Progress{
-			TotalSize: file.Size,
-		}
+		//pr := &Progress{
+		//	TotalSize: file.Size,
+		//	logger:    r.logger,
+		//}
 
 		// Source
 		src, err := file.Open()
@@ -73,7 +74,7 @@ func (r *Router) UploadFile(c echo.Context) error {
 		defer dst.Close()
 
 		// Copy
-		if _, err = io.Copy(dst, io.TeeReader(src, pr)); err != nil {
+		if _, err = io.Copy(dst, src); err != nil {
 			return err
 		}
 	}

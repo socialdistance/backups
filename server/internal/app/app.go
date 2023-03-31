@@ -91,6 +91,9 @@ func (a *App) CommandHandlerApp(ctx context.Context, workerUuid uuid.UUID, addre
 			a.logger.Error("[-] Failed update event in database", zap.Error(err))
 			return nil, err
 		}
+
+		workerTask := internalstorage.NewTask(workerEvent.Command, event.WorkerUuid, workerEvent.Timestamp)
+		return workerTask, nil
 	}
 
 	workerTask := internalstorage.NewTask(workerEvent.Command, workerEvent.WorkerUuid, workerEvent.Timestamp)

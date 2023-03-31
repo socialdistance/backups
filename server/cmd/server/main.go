@@ -86,7 +86,7 @@ func main() {
 }
 
 func startCacheUpdate(storage internalapp.Storage, logger internalapp.Logger, cache internalapp.Cache, pool *workerpool.Pool, doneCh chan struct{}) {
-	ticker := time.NewTicker(5 * time.Second) // каждые 5 минут делаем запрос на обновление кеша
+	ticker := time.NewTicker(5 * time.Minute) // каждые 5 минут делаем запрос на обновление кеша
 	go func() {
 		for {
 			select {
