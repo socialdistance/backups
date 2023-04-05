@@ -152,7 +152,7 @@ func (c *Client) SendFile() error {
 		return err
 	}
 
-	fileNameBackup := fmt.Sprintf("%s/%s-backup-%d-%02d-%d.tar.gz", c.configFileName, taskInfo.Address, time.Now().Year(), time.Now().Month(), time.Now().Day())
+	fileNameBackup := fmt.Sprintf("%s/%s-backup-%02d-%02d-%02d.tar.gz", c.configFileName, taskInfo.Address, time.Now().Year(), time.Now().Month(), time.Now().Day())
 	err = c.PostFile(fileNameBackup, fmt.Sprintf("%s/api/upload", c.targetURL))
 	if err != nil {
 		c.logger.Error("Error upload file:", zap.Error(err))
