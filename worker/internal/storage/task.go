@@ -42,16 +42,27 @@ func (t *Task) HostnameWorker() error {
 }
 
 func (t *Task) GetLocalIPWorker() error {
-	addrs, err := net.InterfaceAddrs()
+	//addrs, err := net.InterfaceAddrs()
+	//if err != nil {
+	//	return err
+	//}
+	//for _, address := range addrs {
+	//	if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+	//		if ipnet.IP.To4() != nil {
+	//			t.Address = ipnet.IP.String()
+	//		}
+	//	}
+	//}
+
+	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		return err
 	}
-	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				t.Address = ipnet.IP.String()
-			}
-		}
-	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	t.Address = localAddr.IP.String()
+
 	return nil
 }
