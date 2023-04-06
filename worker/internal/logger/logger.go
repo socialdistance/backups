@@ -13,7 +13,7 @@ type Logger struct {
 func NewLogger() (*Logger, error) {
 	cfg := zap.NewDevelopmentConfig()
 
-	cfg.OutputPaths = []string{"stderr"}
+	cfg.OutputPaths = []string{"./logs/log.log", "stderr"}
 
 	logger, err := cfg.Build()
 	if err != nil {

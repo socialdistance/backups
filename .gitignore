@@ -1,3 +1,5 @@
 .idea
 server/bin/
 server/data/
+server/logs/
+worker/logs
